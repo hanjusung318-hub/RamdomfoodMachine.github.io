@@ -1,3 +1,11 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F5F5F7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Cpath d='M18 60 A42 42 0 0 0 102 60 Z' fill='%23fff' stroke='%23D1D1D6' stroke-width='3'/%3E%3Cpath d='M18 60 A42 42 0 0 1 102 60 Z' fill='%230071E3'/%3E%3Crect x='16' y='56' width='88' height='8' rx='4' fill='%23E5E5EA'/%3E%3Cellipse cx='48' cy='78' rx='5' ry='6.5' fill='%231D1D1F'/%3E%3Cellipse cx='72' cy='78' rx='5' ry='6.5' fill='%231D1D1F'/%3E%3C/svg%3E">
 <title>랜덤 음식 뽑기</title>
 <!-- 공유 미리보기(카카오톡·슬랙·페이스북·X 등) 썸네일 -->
 <meta name="description" content="오늘 뭐 먹지? 룰렛·사다리·김 대리로 메뉴를 골라 드려요.">
@@ -69,6 +77,11 @@
 }
 
 * { box-sizing: border-box; }
+/* 어디에 올려도 같은 동작을 하도록 기본값을 직접 둔다.
+   특히 [hidden]: 닫힌 결과 창(.backdrop은 display:flex)이 투명한 채로 화면을 덮어 클릭을 막던 문제 방지 */
+[hidden] { display: none !important; }
+html, body { margin: 0; }
+img { max-width: 100%; }
 body {
   background: var(--bg); color: var(--fg);
   font-family: var(--font); font-size: 15px; line-height: 1.5;
@@ -258,9 +271,10 @@ button:focus-visible, input:focus-visible { outline: 3px solid color-mix(in srgb
 #spinBtn { background: var(--mode-slot); }
 #ladderBtn { background: var(--mode-ladder); }
 #officeBtn { background: var(--mode-office); }
-#tabSlot[aria-selected="true"] { color: var(--mode-slot); }
-#tabLadder[aria-selected="true"] { color: var(--mode-ladder); }
-#tabOffice[aria-selected="true"] { color: var(--mode-office); }
+/* 선택된 탭은 그 방식의 색으로 채워서, 라이트·다크 어디서든 잘 읽히게 한다 */
+#tabSlot[aria-selected="true"] { background: var(--mode-slot); color: #FFFFFF; }
+#tabLadder[aria-selected="true"] { background: var(--mode-ladder); color: #FFFFFF; }
+#tabOffice[aria-selected="true"] { background: var(--mode-office); color: #FFFFFF; }
 .pager { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; margin-inline: -20px; scrollbar-width: none; overscroll-behavior-x: contain; }
 .pager::-webkit-scrollbar { display: none; }
 .pager.locked { overflow-x: hidden; }
