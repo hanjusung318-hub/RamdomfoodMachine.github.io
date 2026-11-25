@@ -274,7 +274,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid color-mix(in srgb
 /* office: 김 대리 (뒷모습) — 모니터 두 대가 번갈아 켜지고, 시선 빔이 따라가고, 고르면 그쪽 줄로 걸어가 선 뒤 모니터가 확대된다 */
 .office { border-radius: 16px; overflow: hidden; background: var(--reel); box-shadow: inset 0 0 0 1px var(--line); }
 .office svg { display: block; width: 100%; height: auto; }
-.of-floor { fill: color-mix(in srgb, var(--fg) 4%, transparent); }
+.of-floor { fill: none; } /* 바닥 띠를 없애고 배경을 한 가지 색으로 */
 .of-frame { fill: #2C2C2E; }
 .of-screen { fill: var(--card); transition: fill .12s; }
 .of-mon text { transition: opacity .12s; }
@@ -890,8 +890,12 @@ function maxMenus() { return activeMode === 'office' ? 3 : 12; }
 // 지금 방식에 맞는 안내 문구 (김 대리 화면에서는 김 대리 전용 문구)
 function guideHint() {
   const n = menus.length;
-  if (activeMode === 'office') return n < 2 ? COPY.officeNeed : n > 3 ? COPY.officeOver : '';
-  return n < 2 ? COPY.needTwo : '';
+  if (activeMode === 'office') return n < 2 ? COPY.officeNeed : n > 3 ? COPY.officeOver : `김 대리가 메뉴 ${n}개를 두고 고민해요.`;
+  if (n < 2) return COPY.needTwo;
+  // 안내 칸이 비지 않도록, 지금 방식과 메뉴 수를 알려 준다
+  return activeMode === 'ladder'
+    ? `메뉴 ${n}개로 사다리를 만들어요. 최대 12개까지 넣을 수 있어요.`
+    : `메뉴 ${n}개로 룰렛을 돌려요. 최대 12개까지 넣을 수 있어요.`;
 }
 function renderChips() {
   const ul = $('chips');
@@ -1404,7 +1408,7 @@ function renderOffice(n) {
       <line x1="164" y1="177" x2="${c + w / 4}" y2="${bot + 3}"/>
       <circle class="of-glint" cx="${c}" cy="${bot - 1}" r="4"/>
     </g>`;
-    queues += ofFigure(c, 96, .62, i % 2) + ofFigure(c, 113, .72, !(i % 2)) + ofFigure(c, 131, .82, i % 2);
+    queues += ofFigure(c, 101, .78, i % 2) + ofFigure(c, 116, .9, !(i % 2)) + ofFigure(c, 131, 1.02, i % 2);
   });
   $('office').innerHTML = `<svg viewBox="0 0 320 270" role="img" aria-label="모니터를 번갈아 보며 메뉴를 고르는 김 대리의 뒷모습">
     <rect class="of-floor" x="0" y="196" width="320" height="74"/>
