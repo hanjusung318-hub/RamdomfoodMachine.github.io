@@ -1,4 +1,3 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>랜덤 음식 뽑기</title>
 <!-- 공유 미리보기(카카오톡·슬랙·페이스북·X 등) 썸네일 -->
 <meta name="description" content="오늘 뭐 먹지? 룰렛·사다리·김 대리로 메뉴를 골라 드려요.">
@@ -129,7 +128,8 @@ button:focus-visible, input:focus-visible { outline: 3px solid color-mix(in srgb
 .chip button { flex: none; width: 22px; height: 22px; border: 0; border-radius: 50%; background: color-mix(in srgb, var(--fg) 10%, transparent); cursor: pointer; display: grid; place-items: center; font-size: 13px; line-height: 1; color: var(--muted); }
 .chip button:hover { background: color-mix(in srgb, var(--red) 20%, transparent); color: var(--red); }
 .chip.over { opacity: .4; }
-.reset-link { align-self: flex-end; margin-top: -6px; border: 0; background: none; padding: 2px 0; font-size: 13px; color: var(--muted); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.menu-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 4px 16px; margin-top: -6px; }
+.reset-link { border: 0; background: none; padding: 2px 0; font-size: 13px; color: var(--muted); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
 .reset-link:hover { color: var(--accent); }
 .reset-link:disabled { opacity: .4; cursor: default; }
 .chip.vs-sep { background: none; padding: 6px 2px; color: var(--muted); font-weight: 800; font-size: 12px; letter-spacing: .08em; }
@@ -484,7 +484,10 @@ button:focus-visible, input:focus-visible { outline: 3px solid color-mix(in srgb
     </form>
     <p class="hint" id="hint" aria-live="polite"></p>
     <ul class="chips" id="chips"></ul>
-    <button class="reset-link" id="resetMenus" type="button">기본 메뉴로 되돌리기</button>
+    <div class="menu-actions">
+      <button class="reset-link" id="clearMenus" type="button">메뉴 한 번에 지우기</button>
+      <button class="reset-link" id="resetMenus" type="button">기본 메뉴로 되돌리기</button>
+    </div>
   </section>
 
   <section class="card machine" id="machine" data-mode="idle" aria-label="뽑기">
@@ -919,6 +922,7 @@ function renderChips() {
   $('officeBtn').disabled = menus.length < 2 || busy;
   $('addBtn').disabled = menus.length >= maxMenus() || busy;
   $('resetMenus').disabled = busy;
+  $('clearMenus').disabled = busy || !menus.length;
 }
 function changed() {
   // 후보 메뉴가 바뀌면 화면에 안 보이는 방식까지 모두 다시 준비한다
@@ -926,6 +930,12 @@ function changed() {
   hint(guideHint());
 }
 
+$('clearMenus').addEventListener('click', () => {
+  if (busy || !menus.length) return;
+  menus = []; changed();
+  hint('메뉴를 모두 지웠어요. 먹고 싶은 메뉴를 넣어 주세요.');
+  $('menuInput').focus();
+});
 $('resetMenus').addEventListener('click', () => {
   if (busy) return;
   menus = DEFAULT_MENUS.slice(); changed();
@@ -1638,5 +1648,3 @@ newLadder();
 resetOffice();
 hint(guideHint());
 </script>
-
-</body></html>
