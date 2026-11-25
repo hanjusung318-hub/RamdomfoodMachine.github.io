@@ -1,0 +1,1659 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>랜덤 음식 뽑기</title>
+<!-- 공유 미리보기(카카오톡·슬랙·페이스북·X 등) 썸네일 -->
+<meta name="description" content="오늘 뭐 먹지? 룰렛·사다리·김 대리로 메뉴를 골라 드려요.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="랜덤 음식 뽑기">
+<meta property="og:title" content="랜덤 음식 뽑기">
+<meta property="og:description" content="오늘 뭐 먹지? 룰렛·사다리·김 대리로 메뉴를 골라 드려요.">
+<meta property="og:url" content="https://hanjusung318-hub.github.io/RamdomfoodMachine.github.io/">
+<meta property="og:image" content="https://hanjusung318-hub.github.io/RamdomfoodMachine.github.io/og-image.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="랜덤 음식 뽑기 - 뽑기 캡슐 캐릭터 뽑이와 룰렛, 사다리, 김 대리">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="랜덤 음식 뽑기">
+<meta name="twitter:description" content="오늘 뭐 먹지? 룰렛·사다리·김 대리로 메뉴를 골라 드려요.">
+<meta name="twitter:image" content="https://hanjusung318-hub.github.io/RamdomfoodMachine.github.io/og-image.png">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: 애플풍 단일 컬럼. 후보 입력 카드 → 3릴 슬롯 카드(조명 바 + 결승 VS 바) → 기록. 당첨 시 하단 시트에서 캐릭터 등장. */
+:root {
+  --bg: #F5F5F7;
+  --card: #FFFFFF;
+  --fg: #1D1D1F;
+  --muted: #6E6E73;
+  --line: #E5E5EA;
+  --fill: rgba(118,118,128,.12);
+  --reel: #FAFAFC;
+  --accent: #0071E3;
+  --accent-ink: #FFFFFF;
+  --orange: #FF9F0A;
+  --red: #FF3B30;
+  --green: #34C759;
+  --pink: #FF6FA0;
+  --dot: #E3E3E8;
+  --shadow: 0 1px 2px rgba(0,0,0,.04), 0 10px 30px rgba(0,0,0,.06);
+  --backdrop: rgba(245,245,247,.6);
+  --seg-on: #FFFFFF;
+  --mode-slot: #0071E3;
+  --mode-ladder: #248A3D;
+  --mode-office: #8944D6;
+  /* 룰렛·사다리 탭과 상태 표시가 같은 크기를 쓴다 */
+  --ctl-w: 74px;
+  --ctl-h: 32px;
+  --ctl-r: 10px;
+  --ctl-fs: 12.5px;
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #000000; --card: #1C1C1E; --fg: #F5F5F7; --muted: #98989D; --line: #38383A;
+    --fill: rgba(118,118,128,.24); --reel: #2C2C2E; --accent: #2997FF;
+    --orange: #FF9F0A; --red: #FF453A; --green: #30D158; --pink: #FF7AA8; --dot: #3A3A3C;
+    --shadow: 0 0 0 1px rgba(255,255,255,.04); --backdrop: rgba(0,0,0,.55); --seg-on: #636366;
+    --mode-slot: #0A84FF; --mode-ladder: #2E9E4F; --mode-office: #9B5DE5;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #000000; --card: #1C1C1E; --fg: #F5F5F7; --muted: #98989D; --line: #38383A;
+  --fill: rgba(118,118,128,.24); --reel: #2C2C2E; --accent: #2997FF;
+  --orange: #FF9F0A; --red: #FF453A; --green: #30D158; --pink: #FF7AA8; --dot: #3A3A3C;
+  --shadow: 0 0 0 1px rgba(255,255,255,.04); --backdrop: rgba(0,0,0,.55); --seg-on: #636366;
+  --mode-slot: #0A84FF; --mode-ladder: #2E9E4F; --mode-office: #9B5DE5;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+/* 어디에 올려도 같은 동작을 하도록 기본값을 직접 둔다.
+   특히 [hidden]: 닫힌 결과 창(.backdrop은 display:flex)이 투명한 채로 화면을 덮어 클릭을 막던 문제 방지 */
+[hidden] { display: none !important; }
+html, body { margin: 0; }
+img { max-width: 100%; }
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--font); font-size: 15px; line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 32px 64px;
+}
+.wrap { max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+button { font: inherit; color: inherit; }
+button:focus-visible, input:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 45%, transparent); outline-offset: 2px; }
+
+/* header */
+.top { display: flex; align-items: center; gap: 14px; padding: 0 4px 8px; }
+.mascot-mini svg { display: block; overflow: visible; }
+.mascot-mini { width: 58px; flex: none; animation: bob 2.4s ease-in-out infinite; }
+.top h1 { margin: 0; font-size: clamp(26px, 7vw, 34px); font-weight: 800; letter-spacing: -0.03em; line-height: 1.15; text-wrap: balance; }
+.top .sub { margin: 2px 0 0; color: var(--muted); font-size: 15px; }
+.title-reel {
+  display: inline-block; vertical-align: -0.26em;
+  width: 1.45em; height: 1.3em; overflow: hidden;
+  border-radius: .65em; background: var(--card);
+  box-shadow: inset 0 0 0 1px var(--line), 0 4px 12px -6px rgba(0,0,0,.25);
+  -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,.35), #000 25%, #000 75%, rgba(0,0,0,.35));
+  mask-image: linear-gradient(180deg, rgba(0,0,0,.35), #000 25%, #000 75%, rgba(0,0,0,.35));
+}
+.title-strip { display: block; will-change: transform; transition: transform .7s cubic-bezier(.2,.85,.3,1.15); }
+.title-strip span { display: block; height: 1.3em; line-height: 1.3em; text-align: center; }
+.title-strip.moving { filter: blur(.6px); }
+@keyframes bob { 0%,100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-4px) rotate(2deg); } }
+
+/* cards */
+.card { background: var(--card); border-radius: 22px; box-shadow: var(--shadow); padding: 20px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.card-head h2 { margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.02em; }
+.pill { font-size: 12.5px; font-weight: 600; padding: 4px 10px; border-radius: 999px; background: var(--fill); color: var(--muted); white-space: nowrap; }
+.pill.duel { background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); }
+
+/* input */
+.add { display: flex; gap: 8px; }
+.add input {
+  flex: 1; min-width: 0; font: inherit; font-size: 16px;
+  background: var(--fill); color: var(--fg);
+  border: 0; border-radius: 12px; padding: 12px 14px;
+}
+.add input::placeholder { color: var(--muted); }
+.add.shake { animation: shake .35s; }
+@keyframes shake { 20%,60% { transform: translateX(-5px); } 40%,80% { transform: translateX(5px); } }
+.btn-add { border: 0; border-radius: 12px; padding: 0 18px; background: var(--accent); color: var(--accent-ink); font-weight: 600; cursor: pointer; }
+.btn-add:disabled { opacity: .4; cursor: default; }
+.hint { margin: -6px 0 0; min-height: 1.2em; font-size: 13px; color: var(--muted); }
+.hint.warn { color: var(--red); }
+
+.chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { display: flex; align-items: center; gap: 6px; background: var(--fill); border-radius: 999px; padding: 6px 6px 6px 12px; font-weight: 500; max-width: 100%; }
+.chip .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chip button { flex: none; width: 22px; height: 22px; border: 0; border-radius: 50%; background: color-mix(in srgb, var(--fg) 10%, transparent); cursor: pointer; display: grid; place-items: center; font-size: 13px; line-height: 1; color: var(--muted); }
+.chip button:hover { background: color-mix(in srgb, var(--red) 20%, transparent); color: var(--red); }
+.chip.over { opacity: .4; }
+.menu-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 4px 16px; margin-top: -6px; }
+.reset-link { border: 0; background: none; padding: 2px 0; font-size: 13px; color: var(--muted); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.reset-link:hover { color: var(--accent); }
+.reset-link:disabled { opacity: .4; cursor: default; }
+.chip.vs-sep { background: none; padding: 6px 2px; color: var(--muted); font-weight: 800; font-size: 12px; letter-spacing: .08em; }
+.chips.locked { opacity: .5; pointer-events: none; }
+
+
+/* machine */
+/* 크기·테두리는 고정, 텍스트와 색만 바뀐다 (모드 전환 시 흔들림 방지) */
+.status {
+  flex: none; box-sizing: border-box;
+  width: var(--ctl-w); height: var(--ctl-h); padding: 0 6px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: var(--ctl-fs); font-weight: 600; line-height: 1;
+  border-radius: var(--ctl-r); border: 1px solid transparent;
+  background: var(--fill); color: var(--muted);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  transition: background .2s, color .2s;
+}
+.status[data-tone="spin"]  { background: color-mix(in srgb, var(--accent) 15%, transparent); color: var(--accent); }
+.status[data-tone="reach"] { background: var(--orange); color: #fff; animation: pulse .5s ease-in-out infinite alternate; }
+.status[data-tone="flip"]  { background: var(--red); color: #fff; animation: pulse .25s ease-in-out infinite alternate; }
+.status[data-tone="win"]   { background: var(--green); color: #fff; }
+@keyframes pulse { to { transform: scale(1.08); } }
+
+.lights { display: flex; justify-content: space-between; padding: 0 6px; }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--dot); }
+.machine[data-mode="idle"] .dot:nth-child(4n+1) { background: color-mix(in srgb, var(--accent) 35%, var(--dot)); }
+.machine[data-mode="spin"] .dot { animation: chase 1s linear infinite; animation-delay: calc(var(--i) * -0.05s); }
+.machine[data-mode="reach"] .dot { animation: blinkO .3s steps(1) infinite; }
+.machine[data-mode="reach"] .dot:nth-child(odd) { animation-delay: -.15s; }
+.machine[data-mode="flip"] .dot { animation: blinkR .16s steps(1) infinite; }
+.machine[data-mode="flip"] .dot:nth-child(odd) { animation-delay: -.08s; }
+.machine[data-mode="win"] .dot { animation: party .7s linear infinite; animation-delay: calc(var(--i) * -0.035s); }
+@keyframes chase { 0%,14% { background: var(--accent); box-shadow: 0 0 8px var(--accent); } 15%,100% { background: var(--dot); box-shadow: none; } }
+@keyframes blinkO { 0% { background: var(--orange); box-shadow: 0 0 8px var(--orange); } 50% { background: var(--dot); box-shadow: none; } }
+@keyframes blinkR { 0% { background: var(--red); box-shadow: 0 0 9px var(--red); } 50% { background: var(--dot); box-shadow: none; } }
+@keyframes party { 0% { background: var(--orange); } 25% { background: var(--pink); } 50% { background: var(--accent); } 75% { background: var(--green); } 100% { background: var(--orange); } }
+
+.reels { --H: 76px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.reel {
+  position: relative; height: calc(var(--H) * 3); overflow: hidden;
+  background: var(--reel); border-radius: 16px;
+  box-shadow: inset 0 0 0 1px var(--line);
+  -webkit-mask-image: linear-gradient(180deg, transparent, #000 28%, #000 72%, transparent);
+  mask-image: linear-gradient(180deg, transparent, #000 28%, #000 72%, transparent);
+}
+.reel::after {
+  content: ""; position: absolute; left: 6px; right: 6px; top: var(--H); height: var(--H);
+  border-radius: 12px; pointer-events: none;
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--fg) 10%, transparent);
+  transition: background .25s, box-shadow .25s;
+}
+.reels.win .reel::after { background: color-mix(in srgb, var(--green) 14%, transparent); box-shadow: inset 0 0 0 2px var(--green); }
+.reels.reach .reel.mid::after { box-shadow: inset 0 0 0 2px var(--orange); }
+.reel.thunk { animation: thunk .22s ease-out; }
+@keyframes thunk { 0% { transform: translateY(3px); } 100% { transform: none; } }
+.strip { will-change: transform; }
+.reel.blur .strip { filter: blur(1.4px); }
+.item { height: var(--H); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 0 6px; }
+.item .ie { font-size: 28px; line-height: 1.1; }
+.item .in { font-size: 14px; font-weight: 700; letter-spacing: -0.01em; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.vs { display: grid; grid-template-columns: minmax(0,1fr) auto minmax(0,1fr); align-items: center; gap: 10px; }
+.fin {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 12px 8px; border-radius: 16px; background: var(--fill);
+  transition: transform .18s, background .18s, box-shadow .18s, opacity .3s;
+  min-width: 0;
+}
+.fin .fe { font-size: 24px; line-height: 1.2; }
+.fin .fn { font-weight: 700; font-size: 15px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fin .fl { font-size: 11.5px; color: var(--muted); }
+.fin.empty .fn { color: var(--muted); font-weight: 500; }
+.vs-mark { font-weight: 900; font-size: 15px; letter-spacing: .06em; color: var(--muted); }
+.vs.live .vs-mark { color: var(--orange); animation: pulse .4s ease-in-out infinite alternate; }
+.fin.on { background: color-mix(in srgb, var(--orange) 18%, var(--card)); box-shadow: inset 0 0 0 2px var(--orange); transform: scale(1.05); }
+.fin.win { background: color-mix(in srgb, var(--green) 16%, var(--card)); box-shadow: inset 0 0 0 2px var(--green); transform: scale(1.06); }
+.fin.lose { opacity: .4; transform: scale(.95); }
+.fin.lose .fn { text-decoration: line-through; }
+
+.btn-spin {
+  border: 0; border-radius: 16px; padding: 16px; cursor: pointer;
+  background: var(--accent); color: var(--accent-ink);
+  font-size: 18px; font-weight: 700; letter-spacing: -0.01em;
+  transition: transform .12s, opacity .2s;
+}
+.btn-spin:active:not(:disabled) { transform: scale(.98); }
+.btn-spin:disabled { opacity: .4; cursor: default; }
+.foot-hint { margin: -6px 0 0; text-align: center; font-size: 12.5px; color: var(--muted); }
+
+/* 이모지 통일: 어디서든 컬러 이모지 글꼴로, 같은 정사각형 칸에 원래 비율 그대로 그린다
+   (한글 글꼴이 일부 이모지를 흑백·좁은 글자로 대신 그리거나, 자간 설정이 이모지에 먹던 문제 방지) */
+.em, .item .ie, .fin .fe, .t-emoji, .pop-emoji, .title-strip span, .lad-tile.hit {
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Twemoji Mozilla", sans-serif;
+  font-style: normal; font-weight: 400; letter-spacing: 0;
+  font-variant-emoji: emoji; font-synthesis: none;
+}
+.em, .item .ie, .fin .fe, .t-emoji {
+  display: inline-block; width: 1.25em; height: 1.25em; line-height: 1.25em;
+  text-align: center; flex: none; transform: none;
+}
+
+/* mode switcher + pager */
+.seg { display: inline-flex; background: var(--fill); border-radius: var(--ctl-r); }
+.seg button {
+  box-sizing: border-box; width: var(--ctl-w); height: var(--ctl-h); padding: 0;
+  border: 1px solid transparent; background: transparent; border-radius: var(--ctl-r);
+  font-size: var(--ctl-fs); font-weight: 600; line-height: 1;
+  cursor: pointer; color: var(--muted); transition: background .2s, color .2s;
+}
+.seg button[aria-selected="true"] { background: var(--seg-on); color: var(--fg); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.seg button:disabled { cursor: default; }
+.seg button { position: relative; }
+/* NEW 배지는 탭 모서리 바깥에 떠 있게 해서 탭 버튼을 가리거나 깎아 먹지 않는다 */
+.seg { overflow: visible; }
+.new-badge {
+  position: absolute; top: -11px; right: -10px; z-index: 2;
+  padding: 2px 5px; border-radius: 6px;
+  background: var(--red); color: #FFFFFF;
+  font-size: 9px; font-weight: 800; letter-spacing: .04em; line-height: 1.1;
+  pointer-events: none;
+}
+.machine > .card-head { padding-top: 6px; padding-right: 4px; }
+
+/* 방식마다 고유 색: 룰렛 파랑 · 사다리 초록 · 김 대리 보라 */
+#spinBtn { background: var(--mode-slot); }
+#ladderBtn { background: var(--mode-ladder); }
+#officeBtn { background: var(--mode-office); }
+/* 선택된 탭은 그 방식의 색으로 채워서, 라이트·다크 어디서든 잘 읽히게 한다 */
+#tabSlot[aria-selected="true"] { background: var(--mode-slot); color: #FFFFFF; }
+#tabLadder[aria-selected="true"] { background: var(--mode-ladder); color: #FFFFFF; }
+#tabOffice[aria-selected="true"] { background: var(--mode-office); color: #FFFFFF; }
+.pager { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; margin-inline: -20px; scrollbar-width: none; overscroll-behavior-x: contain; }
+.pager::-webkit-scrollbar { display: none; }
+.pager.locked { overflow-x: hidden; }
+.pane { flex: 0 0 100%; min-width: 0; scroll-snap-align: start; padding-inline: 20px; display: flex; flex-direction: column; gap: 14px; }
+.dots { display: flex; justify-content: center; gap: 6px; margin-top: -4px; }
+.dots span { width: 6px; height: 6px; border-radius: 3px; background: var(--dot); transition: width .25s, background .25s; }
+.dots span.on { width: 18px; background: var(--fg); }
+
+.machine > .card-head { gap: 6px; flex-wrap: wrap; }
+
+/* office: 김 대리 (뒷모습) — 모니터 두 대가 번갈아 켜지고, 시선 빔이 따라가고, 고르면 그쪽 줄로 걸어가 선 뒤 모니터가 확대된다 */
+.office { border-radius: 16px; overflow: hidden; background: var(--reel); box-shadow: inset 0 0 0 1px var(--line); }
+.office svg { display: block; width: 100%; height: auto; }
+.of-floor { fill: none; } /* 바닥 띠를 없애고 배경을 한 가지 색으로 */
+.of-frame { fill: #2C2C2E; }
+.of-screen { fill: var(--card); transition: fill .12s; }
+.of-mon text { transition: opacity .12s; }
+.office.playing .of-mon:not(.on):not(.win) .of-screen { fill: #3A3A3C; }
+.office.playing .of-mon:not(.on):not(.win) text { opacity: .18; }
+.of-ring { fill: none; stroke: transparent; stroke-width: 3; transition: stroke .12s; }
+.of-mon.on .of-ring { stroke: var(--accent); }
+.of-mon.win .of-ring { stroke: var(--green); }
+.of-mon { transform-box: view-box; transition: transform .5s cubic-bezier(.4,0,.2,1), opacity .25s; }
+
+
+.of-emo { font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; font-size: 28px; }
+.of-name { fill: var(--fg); font-size: 11px; font-weight: 700; }
+.of-gaze { opacity: 0; transition: opacity .12s; }
+.of-gaze.on { opacity: 1; }
+.of-gaze polygon { fill: var(--accent); opacity: .12; }
+.of-gaze line { stroke: var(--accent); stroke-width: 2; stroke-linecap: round; stroke-dasharray: 2 8; animation: gazeflow .45s linear infinite; }
+@keyframes gazeflow { to { stroke-dashoffset: -10; } }
+.of-glint { fill: var(--accent); transform-box: fill-box; transform-origin: center; animation: glint .45s ease-in-out infinite alternate; }
+@keyframes glint { from { transform: scale(.6); opacity: .5; } to { transform: scale(1.3); opacity: 1; } }
+.of-qp { fill: #C7C7CC; transform-box: fill-box; transform-origin: 50% 100%; animation: sway 2.6s ease-in-out infinite alternate; }
+.of-qp.q2 { fill: #AEAEB2; animation-delay: -1.3s; }
+@keyframes sway { from { transform: rotate(-2deg); } to { transform: rotate(2deg); } }
+.of-me { transform-box: view-box; transform-origin: 160px 238px; transition: transform .85s cubic-bezier(.45,0,.3,1), opacity .25s; }
+.office.walking .of-bob { animation: walkbob .2s ease-in-out infinite alternate; }
+@keyframes walkbob { to { transform: translateY(-5px); } }
+.of-head { transform-box: view-box; transform-origin: 160px 230px; transition: transform .22s cubic-bezier(.3,1.5,.5,1); }
+.of-bubble circle, .of-bubble rect { fill: var(--card); stroke: var(--line); stroke-width: 1.2; }
+.of-think { fill: var(--fg); font-size: 12.5px; font-weight: 700; }
+.office.done .of-think { fill: var(--green); }
+.of-fade { transition: opacity .25s; }
+.office.zoom .of-fade, .office.zoom .of-mon:not(.win) { opacity: 0; }
+.office.hide-bubble .of-bubble { opacity: 0; }
+
+/* ladder */
+.ladder { position: relative; padding-block: 40px 52px; }
+.ladder svg { display: block; width: 100%; height: 260px; overflow: visible; }
+.lad-top, .lad-bot { position: absolute; left: 0; right: 0; }
+.lad-top { top: 2px; height: 32px; }
+.lad-bot { bottom: 4px; height: 42px; }
+.lad-start {
+  position: absolute; top: 0; transform: translateX(-50%);
+  border: 0; border-radius: 50%; background: var(--fill); color: var(--fg);
+  font-weight: 700; font-size: 13px; cursor: pointer; font-variant-numeric: tabular-nums;
+  display: grid; place-items: center; padding: 0;
+}
+.lad-start:hover:not(:disabled) { background: color-mix(in srgb, var(--accent) 18%, transparent); color: var(--accent); }
+.lad-start.on { background: var(--accent); color: var(--accent-ink); }
+.lad-start:disabled { cursor: default; }
+.lad-tile {
+  position: absolute; top: 0; height: 42px; transform: translateX(-50%);
+  border-radius: 10px; background: var(--fill); color: var(--muted);
+  display: grid; place-items: center; font-size: 16px; font-weight: 700;
+}
+.lad-tile.hit { background: color-mix(in srgb, var(--green) 16%, var(--card)); box-shadow: inset 0 0 0 2px var(--green); font-size: 20px; animation: tileflip .45s ease-out; }
+@keyframes tileflip { from { transform: translateX(-50%) rotateY(90deg); } to { transform: translateX(-50%) rotateY(0); } }
+.lad-line { stroke: color-mix(in srgb, var(--fg) 22%, transparent); stroke-width: 3; stroke-linecap: round; }
+.lad-path { fill: none; stroke: var(--accent); stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
+.lad-dot { fill: var(--accent); stroke: var(--card); stroke-width: 3; }
+.lad-cover {
+  position: absolute; left: 0; right: 0; top: 52px; height: 236px;
+  border-radius: 16px;
+  background:
+    repeating-linear-gradient(135deg, transparent 0 12px, color-mix(in srgb, var(--fg) 4%, transparent) 12px 24px),
+    var(--reel);
+  box-shadow: inset 0 0 0 1px var(--line), 0 6px 18px -10px rgba(0,0,0,.25);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  color: var(--muted); font-size: 14px; font-weight: 600; text-align: center; padding: 0 12px;
+  transition: opacity .3s ease, transform .3s ease;
+}
+.lad-cover .lc-q {
+  width: 44px; height: 44px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--card); color: var(--accent); font-size: 22px; font-weight: 900;
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.lad-cover.off { opacity: 0; transform: translateY(-10px) scale(.97); pointer-events: none; }
+.lad-empty { height: 260px; display: grid; place-items: center; text-align: center; color: var(--muted); font-size: 14px; border-radius: 16px; background: var(--reel); box-shadow: inset 0 0 0 1px var(--line); padding: 0 16px; }
+
+/* history */
+.history { padding: 4px 4px 0; display: flex; flex-direction: column; gap: 8px; }
+.history h2 { margin: 0; font-size: 15px; font-weight: 700; color: var(--muted); }
+.history ol { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 6px; }
+.history li { font-size: 13.5px; padding: 5px 11px; border-radius: 999px; background: var(--card); box-shadow: var(--shadow); }
+.history .none { background: none; box-shadow: none; padding: 0; color: var(--muted); }
+
+/* confetti */
+#confetti { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 30; }
+
+/* sheet */
+.backdrop {
+  position: fixed; inset: 0; z-index: 20;
+  background: var(--backdrop);
+  -webkit-backdrop-filter: blur(12px) saturate(1.3); backdrop-filter: blur(12px) saturate(1.3);
+  display: flex; align-items: flex-end; justify-content: center;
+  padding: 16px max(16px, env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  opacity: 0; transition: opacity .25s;
+}
+.backdrop.open { opacity: 1; }
+.sheet {
+  width: 100%; max-width: 420px; background: var(--card); border-radius: 28px;
+  box-shadow: 0 30px 80px rgba(0,0,0,.25);
+  padding: 22px 20px 20px; display: flex; flex-direction: column; align-items: center; gap: 14px;
+  transform: translateY(110%); transition: transform .5s cubic-bezier(.2,1,.3,1.08);
+  max-height: 100%; overflow: auto;
+}
+.backdrop.open .sheet { transform: none; }
+.hero { position: relative; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.bubble {
+  position: relative; background: var(--accent); color: var(--accent-ink);
+  font-size: 18px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.4;
+  text-align: center; text-wrap: balance; word-break: keep-all; max-width: 100%;
+  padding: 12px 18px; border-radius: 20px;
+  transform: scale(0); transform-origin: 50% 100%;
+}
+.bubble::after { content: ""; position: absolute; left: 50%; bottom: -9px; margin-left: -9px; border: 9px solid transparent; border-bottom: 0; border-top-color: var(--accent); }
+.backdrop.open .bubble { animation: pop .45s 1.45s cubic-bezier(.3,1.7,.5,1) forwards; }
+.char-big { position: absolute; inset: 0; display: flex; justify-content: center; align-items: center; transform: translateY(40px) scale(.6); opacity: 0; }
+.char-big svg { display: block; width: 150px; overflow: visible; }
+.backdrop.open .char-big { animation: rise .45s .1s cubic-bezier(.3,1.6,.5,1) forwards; }
+.backdrop.open .char-big svg { animation: rattle .3s .5s linear, vanish .28s 1.05s ease-in forwards; }
+@keyframes rattle { 0%,100% { transform: rotate(0); } 25% { transform: rotate(-9deg); } 50% { transform: rotate(8deg); } 75% { transform: rotate(-5deg); } }
+@keyframes vanish { to { transform: scale(.15); opacity: 0; } }
+@keyframes pop { to { transform: scale(1); } }
+@keyframes rise { to { transform: none; opacity: 1; } }
+/* 결과 연출(약 1.5초):
+   0.1 뽑이 등장 → 0.5 덜덜 → 0.8 뚜껑 딸깍 → 1.0 연기 펑 + 뽑이 사라짐 → 1.05 음식 이모지가 뽑이 크기로 커짐 → 1.45 말풍선 → 이후 둥실둥실 */
+.char-wrap { position: relative; width: 170px; height: 150px; margin: 2px auto 0; }
+.char-big .cap-top { transform-box: view-box; transform-origin: 20px 60px; }
+.backdrop.open .char-big .cap-top { animation: capopen .3s .8s cubic-bezier(.3,1.6,.5,1) forwards; }
+@keyframes capopen { to { transform: translate(-6px, -10px) rotate(-38deg); } }
+.smoke { position: absolute; inset: 0; pointer-events: none; }
+.smoke i {
+  position: absolute; left: 50%; top: 50%; width: 56px; height: 56px; margin: -28px 0 0 -28px;
+  border-radius: 50%; background: color-mix(in srgb, var(--fg) 11%, var(--card));
+  opacity: 0;
+}
+.backdrop.open .smoke i { animation: puff .75s calc(1s + var(--d)) ease-out forwards; }
+@keyframes puff {
+  0% { transform: translate(0, 0) scale(.3); opacity: .95; }
+  100% { transform: translate(var(--dx), var(--dy)) scale(1.9); opacity: 0; }
+}
+.pop-emoji {
+  position: absolute; left: 50%; top: 50%; z-index: 1;
+  display: block; width: 136px; height: 136px; max-width: none;
+  transform: translate(-50%, -50%) scale(.1); opacity: 0;
+  /* 큰 글자 이모지를 매 프레임 다시 그리지 않도록, 미리 그린 이미지를 GPU 레이어에서 움직인다 */
+  will-change: transform, opacity; backface-visibility: hidden;
+}
+.smoke i { will-change: transform, opacity; }
+/* 결과 창이 떠 있는 동안 뒤쪽 애니메이션을 멈춰서, 배경 흐림을 매 프레임 다시 계산하지 않게 한다 */
+.sheet-open .wrap *, .sheet-open .wrap *::before, .sheet-open .wrap *::after { animation-play-state: paused !important; }
+.backdrop.open .pop-emoji { animation: grow .5s 1.05s cubic-bezier(.3,1.6,.5,1) forwards, floaty 2.2s 1.8s ease-in-out infinite; }
+@keyframes grow { to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
+@keyframes floaty {
+  0%, 100% { transform: translate(-50%, -50%) scale(1) rotate(0); opacity: 1; }
+  50% { transform: translate(-50%, -56%) scale(1.03) rotate(-3deg); opacity: 1; }
+}
+/* 뽑는 중에는 헤더의 뽑이가 덜덜 떤다 */
+.busy .mascot-mini { animation: jiggle .14s linear infinite; }
+@keyframes jiggle { 0%,100% { transform: rotate(0); } 25% { transform: rotate(-6deg); } 75% { transform: rotate(6deg); } }
+
+.ticket {
+  width: 100%; border-radius: 18px; background: var(--reel);
+  box-shadow: inset 0 0 0 1px var(--line);
+  padding: 16px 18px; display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 4px 14px;
+  position: relative;
+}
+.ticket::before, .ticket::after { content: ""; position: absolute; top: 50%; width: 18px; height: 18px; margin-top: -9px; border-radius: 50%; background: var(--card); box-shadow: inset 0 0 0 1px var(--line); }
+.ticket::before { left: -9px; clip-path: inset(0 0 0 50%); }
+.ticket::after { right: -9px; clip-path: inset(0 50% 0 0); }
+.t-emoji { grid-row: span 2; font-size: 44px; line-height: 1; }
+.t-label { font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: .04em; font-variant-numeric: tabular-nums; }
+.t-name { font-size: 28px; font-weight: 900; letter-spacing: -0.03em; line-height: 1.15; word-break: keep-all; overflow-wrap: anywhere; }
+.line { margin: 0; text-align: center; font-weight: 600; font-size: 16px; text-wrap: balance; }
+.line2 { margin: -8px 0 0; text-align: center; color: var(--muted); font-size: 14px; }
+.sheet-actions { width: 100%; display: grid; gap: 8px; }
+.btn { border: 0; border-radius: 14px; padding: 14px; font-weight: 700; font-size: 16px; cursor: pointer; }
+.btn.primary { background: var(--accent); color: var(--accent-ink); }
+.btn.plain { background: var(--fill); color: var(--fg); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+  .bubble { transform: none; opacity: 1; }
+  .char-big, .smoke { display: none; }
+  .pop-emoji { transform: translate(-50%, -50%); opacity: 1; }
+}
+</style>
+
+<main class="wrap">
+  <header class="top">
+    <div class="mascot-mini" id="mascotMini" aria-hidden="true"></div>
+    <div>
+      <h1 aria-label="랜덤 음식 뽑기">랜덤 <span class="title-reel" aria-hidden="true"><span class="title-strip" id="titleStrip"><span>🍜</span></span></span> 뽑기</h1>
+      <p class="sub">먹고 싶은 메뉴를 적고 룰렛을 돌려 보세요.</p>
+    </div>
+  </header>
+
+  <section class="card" aria-labelledby="h-cand">
+    <div class="card-head">
+      <h2 id="h-cand">후보 메뉴</h2>
+      <span class="pill" id="modePill">양자택일</span>
+    </div>
+    <form class="add" id="addForm" autocomplete="off">
+      <input id="menuInput" type="text" maxlength="14" placeholder="예: 김치찌개" aria-label="메뉴 이름">
+      <button class="btn-add" id="addBtn" type="submit">추가</button>
+    </form>
+    <p class="hint" id="hint" aria-live="polite"></p>
+    <ul class="chips" id="chips"></ul>
+    <div class="menu-actions">
+      <button class="reset-link" id="clearMenus" type="button">메뉴 한 번에 지우기</button>
+      <button class="reset-link" id="resetMenus" type="button">기본 메뉴로 되돌리기</button>
+    </div>
+  </section>
+
+  <section class="card machine" id="machine" data-mode="idle" aria-label="뽑기">
+    <div class="card-head">
+      <div class="seg" role="tablist" aria-label="뽑기 방식">
+        <button type="button" role="tab" id="tabSlot" aria-selected="true" aria-controls="paneSlot">룰렛</button>
+        <button type="button" role="tab" id="tabLadder" aria-selected="false" aria-controls="paneLadder">사다리</button>
+        <button type="button" role="tab" id="tabOffice" aria-selected="false" aria-controls="paneOffice">김 대리<span class="new-badge">NEW</span></button>
+      </div>
+      <span class="status" id="status" data-tone="idle" aria-live="polite">대기 중</span>
+    </div>
+    <div class="pager" id="pager">
+    <div class="pane" id="paneSlot" role="tabpanel" aria-labelledby="tabSlot">
+    <div class="lights" id="lightsTop" aria-hidden="true"></div>
+    <div class="reels" id="reels">
+      <div class="reel" id="reel0"><div class="strip" id="strip0"></div></div>
+      <div class="reel mid" id="reel1"><div class="strip" id="strip1"></div></div>
+      <div class="reel" id="reel2"><div class="strip" id="strip2"></div></div>
+    </div>
+    <div class="lights" id="lightsBot" aria-hidden="true"></div>
+    <div class="vs" id="vs">
+      <div class="fin empty" id="finA"><span class="fe">?</span><span class="fn">결승 진출 1</span><span class="fl">왼쪽 칸</span></div>
+      <span class="vs-mark">VS</span>
+      <div class="fin empty" id="finB"><span class="fe">?</span><span class="fn">결승 진출 2</span><span class="fl">오른쪽 칸</span></div>
+    </div>
+    <button class="btn-spin" id="spinBtn" type="button">돌리기</button>
+    <p class="foot-hint">양쪽 칸에서 결승에 오를 메뉴 2개를 뽑고, 가운데 칸에서 최종 메뉴를 정해요.<br>옆으로 넘기면 사다리 게임도 있어요.</p>
+    </div>
+    <div class="pane" id="paneLadder" role="tabpanel" aria-labelledby="tabLadder">
+      <div class="ladder" id="ladder"></div>
+      <button class="btn-spin" id="ladderBtn" type="button">랜덤 출발</button>
+      <p class="foot-hint">위의 번호를 눌러 출발할 곳을 고르거나 랜덤 출발을 눌러 보세요.<br>메뉴 자리는 판마다 새로 섞여요.</p>
+    </div>
+    <div class="pane" id="paneOffice" role="tabpanel" aria-labelledby="tabOffice">
+      <div class="office" id="office"></div>
+      <button class="btn-spin" id="officeBtn" type="button">김 대리에게 맡기기</button>
+      <p class="foot-hint">김 대리가 모니터를 번갈아 보며 고민하다가 하나를 골라 줘요.</p>
+    </div>
+    </div>
+    <div class="dots" aria-hidden="true"><span class="on" id="dot0"></span><span id="dot1"></span><span id="dot2"></span></div>
+  </section>
+
+  <section class="history" aria-labelledby="h-hist">
+    <h2 id="h-hist">오늘 뽑은 메뉴</h2>
+    <ol id="hist"><li class="none">아직 뽑은 메뉴가 없어요.</li></ol>
+  </section>
+</main>
+
+<canvas id="confetti" aria-hidden="true"></canvas>
+
+<div class="backdrop" id="sheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="tName">
+    <div class="hero">
+      <div class="bubble" id="bubble">이거 먹어!</div>
+      <div class="char-wrap" aria-hidden="true">
+        <div class="char-big" id="charBig"></div>
+        <div class="smoke">
+          <i style="--dx:-58px;--dy:-30px;--d:0s"></i><i style="--dx:56px;--dy:-34px;--d:.04s"></i>
+          <i style="--dx:-66px;--dy:22px;--d:.08s"></i><i style="--dx:64px;--dy:26px;--d:.02s"></i>
+          <i style="--dx:-20px;--dy:-62px;--d:.06s"></i><i style="--dx:24px;--dy:58px;--d:.1s"></i>
+          <i style="--dx:0px;--dy:0px;--d:0s"></i>
+        </div>
+        <img class="pop-emoji" id="popEmoji" alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+
+      </div>
+    </div>
+    <div class="ticket">
+      <span class="t-emoji" id="tEmoji">🍽️</span>
+      <span class="t-label" id="tLabel"></span>
+      <span class="t-name" id="tName">메뉴</span>
+    </div>
+    <p class="line" id="tLine"></p>
+    <p class="line2" id="tLine2"></p>
+    <div class="sheet-actions">
+      <button class="btn primary" id="btnOk" type="button">이걸로 결정</button>
+      <button class="btn plain" id="btnAgain" type="button">다시 돌리기</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const H = 76;
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const sleep = ms => new Promise(r => setTimeout(r, reduce ? Math.min(ms, 120) : ms));
+const rand = n => Math.floor(Math.random() * n);
+const pick = a => a[rand(a.length)];
+const shuffle = a => a.map(v => [Math.random(), v]).sort((x, y) => x[0] - y[0]).map(v => v[1]);
+const esc = s => s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const josa = (w, a, b) => { const c = w.charCodeAt(w.length - 1); return (c >= 0xAC00 && c <= 0xD7A3 && (c - 0xAC00) % 28) ? a : b; };
+
+/* 이모지 사전: 이모지 → 키워드들. 한국어 음식 이름은 뒤에 오는 말이 요리 종류를 정하므로
+   (김치'찌개', 돈까스'김밥', 치킨'버거') 이름 끝에 가장 가깝게 끝나는 키워드를 고르고, 같으면 더 긴 키워드를 고른다. */
+const EMOJI_DICT = {
+  '🍜': '국수 칼국수 잔치국수 콩국수 비빔국수 냉면 물냉면 비빔냉면 막국수 밀면 쫄면 라면 라멘 우동 소바 쌀국수 짬뽕 울면 누들 탄탄면 마라면 ramen pho udon noodle',
+  '🍝': '짜장 짜장면 짜파게티 간짜장 파스타 스파게티 까르보나라 알리오올리오 봉골레 라자냐 pasta',
+  '🍲': '찌개 김치찌개 된장찌개 순두부 부대찌개 탕 국 국밥 해장국 순대국 설렁탕 곰탕 갈비탕 감자탕 삼계탕 추어탕 육개장 전골 매운탕 뼈해장국',
+  '🫕': '샤브샤브 훠궈 퐁듀 스키야키',
+  '🌶️': '떡볶이 엽떡 로제떡볶이 마라 마라탕 마라샹궈',
+  '🔥': '곱창 막창 대창 불닭 닭발 숯불 화로',
+  '🍗': '치킨 후라이드 양념치킨 닭강정 닭갈비 찜닭 닭다리 닭꼬치 통닭 chicken',
+  '🍕': '피자 pizza',
+  '🍔': '버거 햄버거 burger 맥도날드 버거킹',
+  '🍟': '감자튀김 프렌치프라이 fries',
+  '🌭': '핫도그 소시지 순대',
+  '🍙': '김밥 주먹밥 삼각김밥 오니기리 꼬마김밥 충무김밥',
+  '🍣': '초밥 스시 사시미 연어 sushi 오마카세',
+  '🐟': '회 물회 생선 고등어 갈치 생선구이',
+  '🦐': '새우 쉬림프 감바스',
+  '🦀': '게 꽃게 대게 킹크랩 게장 간장게장 양념게장',
+  '🦞': '랍스터 lobster',
+  '🦪': '굴 조개 조개구이 홍합',
+  '🐙': '쭈꾸미 주꾸미 낙지 문어 산낙지',
+  '🦑': '오징어 오징어볶음',
+  '🥩': '고기 소고기 한우 갈비 떡갈비 스테이크 육회 불고기 차돌 차돌박이 등심 안심 steak',
+  '🥓': '삼겹살 오겹살 대패 대패삼겹살 베이컨',
+  '🍖': '족발 보쌈 제육 제육볶음 수육 돼지갈비 립 바베큐 탕수육 양갈비',
+  '🍢': '어묵 오뎅 꼬치 양꼬치 분식',
+  '🍱': '돈까스 돈가스 카츠 도시락 정식 벤또',
+  '🍛': '카레 커리 하이라이스 curry',
+  '🍚': '밥 덮밥 비빔밥 볶음밥 규동 사케동 쌈밥 밥버거 한식 집밥 백반',
+  '🍳': '오므라이스 계란 계란말이 에그 브런치 계란후라이',
+  '🍤': '튀김 새우튀김 텐동 덴뿌라 텐푸라',
+  '🥗': '샐러드 포케 샐러드볼 salad poke',
+  '🥟': '만두 딤섬 교자 샤오롱바오 군만두 물만두 중식 중국집',
+  '🥪': '샌드위치 서브웨이 sandwich',
+  '🍞': '토스트 식빵',
+  '🥐': '빵 크루아상 베이커리 빵집',
+  '🥯': '베이글',
+  '🥞': '팬케이크 전 파전 해물파전 부침개 빈대떡 김치전',
+  '🧇': '와플',
+  '🌮': '타코 taco',
+  '🌯': '부리또 브리또 burrito',
+  '🥙': '케밥 팔라펠 kebab',
+  '🥘': '빠에야 리조또',
+  '🥣': '죽 전복죽 호박죽 시리얼 그래놀라',
+  '🥢': '분짜 반미 팟타이 쌀국숫집',
+  '🍡': '떡 경단 탕후루',
+  '🍰': '케이크 디저트 cake',
+  '🍩': '도넛 donut',
+  '🍦': '아이스크림',
+  '🍧': '빙수 팥빙수',
+  '☕': '커피 라떼 아메리카노 카페 coffee',
+  '🧋': '버블티 밀크티 공차',
+  '🍺': '맥주 호프 치맥',
+  '🍶': '소주 막걸리 사케',
+  '🍷': '와인',
+  '🍠': '고구마',
+  '🍎': '과일',
+  '🏪': '편의점',
+  '🛵': '배달',
+  '🫥': '굶기 굶자 굶어 다이어트',
+};
+const EMOJI_KEYS = Object.entries(EMOJI_DICT).flatMap(([e, words]) => words.split(' ').map(w => [w.toLowerCase(), e]));
+function bestMatch(name, pairs) {
+  const s = name.toLowerCase().replace(/\s+/g, '');
+  let best = null;
+  for (const [k, v] of pairs) {
+    const i = s.lastIndexOf(k);
+    if (i < 0) continue;
+    const end = i + k.length;
+    const score = end * 100 + k.length;
+    if (!best || score > best.score) best = { score, end, k, v };
+  }
+  return best;
+}
+const emojiCache = new Map();
+function emojiFor(name) {
+  if (!emojiCache.has(name)) { const b = bestMatch(name, EMOJI_KEYS); emojiCache.set(name, b ? b.v : '🍽️'); }
+  return emojiCache.get(name);
+}
+
+/* 캐릭터 맞춤 멘트: 메뉴 키워드별 전용 멘트가 우선, 없으면 이모지(요리 종류)별 멘트.
+   {m} = 메뉴 이름, {m:은} {m:이} {m:로} = 받침에 맞춘 조사 */
+const LINE_SPECIFIC = {
+  보쌈: '보들보들 수육에 보쌈김치 척 올려 먹으면 그게 최고지!',
+  족발: '쫀득한 족발에 새우젓 콕! 막국수까지 시키면 완벽해!',
+  삼겹살: '노릇노릇 삼겹살에 구운 마늘 하나, 쌈 싸서 크게 한 입!',
+  오겹살: '껍데기까지 쫀득한 오겹살, 멜젓 찍어 먹어 봐!',
+  대패: '대패는 굽자마자 바로 먹는 거야. 쉴 틈 없이!',
+  치킨: '바삭한 치킨에 콜라 한 잔! 다이어트는 내일부터!',
+  양념치킨: '달콤짭짤 양념치킨, 손가락까지 쪽쪽 빨아 먹어!',
+  닭갈비: '닭갈비 다 먹고 볶음밥 꼭 볶아 먹어. 이건 약속이야!',
+  찜닭: '찜닭 당면은 국룰! 남은 양념에 밥 비비는 것도 잊지 마!',
+  닭강정: '달달 바삭 닭강정, 식어도 맛있으니까 천천히!',
+  짜장: '단무지에 양파, 춘장 콕 찍어서 짜장면 후루룩!',
+  짜파게티: '일요일엔 내가 요리사! 짜파게티에 계란후라이 추가!',
+  짬뽕: '얼큰한 짬뽕 국물 한 숟갈이면 스트레스 싹 날아가!',
+  탕수육: '부먹이든 찍먹이든, 바삭할 때 빨리 먹는 게 정답!',
+  라면: '꼬들꼬들 라면에 김치 한 점, 이게 진리야!',
+  냉면: '시원한 냉면에 식초랑 겨자 살짝, 속이 뻥 뚫려!',
+  물냉면: '살얼음 동동 물냉면, 육수까지 원샷 가자!',
+  비빔냉면: '새콤달콤 비빔냉면, 따끈한 육수 한 잔 곁들여!',
+  막국수: '들기름 막국수 쓱쓱 비벼서 김가루 듬뿍!',
+  국밥: '뜨끈한 국밥 한 그릇이면 오늘 하루 든든하게 버틴다!',
+  순대국: '순대국엔 들깨가루 듬뿍, 부추도 팍팍 넣어!',
+  감자탕: '뼈 쪽쪽 발라 먹고, 마지막엔 볶음밥 필수!',
+  해장국: '어제의 나를 용서하는 맛, 해장국 한 그릇!',
+  김치찌개: '푹 익은 김치찌개에 계란말이 하나면 게임 끝!',
+  된장찌개: '구수한 된장찌개에 밥 쓱 말면 엄마 생각 나지!',
+  부대찌개: '부대찌개엔 라면사리 무조건 추가야!',
+  순두부: '보글보글 순두부에 날계란 톡 깨 넣어!',
+  삼계탕: '삼계탕 한 그릇이면 기운이 쑥쑥! 찹쌀까지 다 먹어!',
+  설렁탕: '설렁탕엔 깍두기 국물 살짝, 소면부터 건져 먹어!',
+  곰탕: '맑고 진한 곰탕, 밥 말아서 깍두기 하나 올려!',
+  갈비탕: '갈비탕 고기는 가위로 착착, 국물은 끝까지!',
+  육개장: '얼큰한 육개장에 밥 말아서 후루룩!',
+  마라탕: '마라탕엔 꿔바로우 같이 시켜야 완성이야!',
+  마라샹궈: '얼얼한 마라샹궈엔 밥이랑 시원한 음료 필수!',
+  떡볶이: '떡볶이 국물에 튀김 푹 찍어 먹으면 끝장나!',
+  엽떡: '엽떡은 주먹밥이랑 같이! 쿨피스도 잊지 마!',
+  로제떡볶이: '꾸덕한 로제 소스에 넓적당면 추가 강력 추천!',
+  김밥: '김밥 한 줄에 라면 하나, 분식집 국룰 세트야!',
+  초밥: '초밥은 흰살생선부터 차근차근, 마지막은 연어로!',
+  회: '싱싱한 회 한 점에 초장 콕, 쌈 싸 먹어도 최고!',
+  물회: '시원한 물회에 소면 말아서 호로록!',
+  피자: '치즈 쭉 늘어나는 피자, 끝부분은 소스에 콕!',
+  버거: '두 손으로 꽉 잡고 크게 한 입! 감자튀김도 잊지 마!',
+  돈까스: '겉바속촉 돈까스에 소스 듬뿍, 양배추도 챙겨 먹어!',
+  돈가스: '겉바속촉 돈가스에 소스 듬뿍, 양배추도 챙겨 먹어!',
+  카레: '카레엔 김치 한 조각 올려 먹으면 한국식 완성!',
+  쌀국수: '쌀국수엔 숙주 듬뿍, 라임 한 번 쭉 짜 넣어!',
+  라멘: '진한 라멘 국물에 차슈 한 점, 면은 불기 전에!',
+  우동: '따끈한 우동 국물 한 모금이면 마음까지 녹아!',
+  칼국수: '쫄깃한 칼국수에 겉절이 한 입, 그게 바로 조합이지!',
+  콩국수: '고소한 콩국수, 설탕파든 소금파든 오늘은 네 맘대로!',
+  파스타: '포크로 돌돌 말아서 한 입에! 마늘빵도 곁들여!',
+  제육: '매콤한 제육에 상추쌈, 밥 한 공기 순삭이야!',
+  불고기: '달달한 불고기 국물에 밥 비벼 먹어!',
+  갈비: '갈비는 뼈째 들고 뜯어야 제맛이지!',
+  떡갈비: '도톰한 떡갈비 한 입에 밥 한 숟갈, 이게 행복!',
+  스테이크: '스테이크는 미디엄 레어로! 오늘은 근사하게!',
+  육회: '고소한 육회에 배 한 조각 같이 올려 먹어!',
+  곱창: '곱창 다 먹고 남은 기름에 볶음밥 볶으면 게임 끝!',
+  막창: '막창은 쌈장 콕! 바삭하게 구워서 먹자!',
+  닭발: '매운 닭발엔 주먹밥이랑 계란찜으로 불 끄기!',
+  샐러드: '아삭한 샐러드로 가볍게! 몸이 고맙다고 할 거야!',
+  포케: '포케 쓱쓱 비벼서 건강하게 한 그릇!',
+  만두: '육즙 팡 터지는 만두, 입천장 조심해!',
+  샤브샤브: '고기 살랑살랑 익혀서 소스 콕, 마무리는 죽!',
+  훠궈: '홍탕 백탕 반반으로, 맵찔이도 걱정 없어!',
+  비빔밥: '고추장 한 숟갈 넣고 쓱쓱 비벼 먹어!',
+  볶음밥: '고슬고슬 볶음밥 위에 계란후라이 하나 올려!',
+  오므라이스: '폭신한 계란 이불 덮은 오므라이스, 케첩으로 하트!',
+  죽: '속 편한 죽 한 그릇, 오늘은 나를 아껴 주자!',
+  토스트: '버터 바른 토스트에 설탕 살짝, 길거리 그 맛!',
+  샌드위치: '든든한 샌드위치로 가볍고 빠르게 해결!',
+  타코: '타코엔 라임 쭉! 소스 흘리지 않게 조심!',
+  파전: '파전엔 막걸리, 이건 과학이야!',
+  게장: '간장게장은 밥도둑! 밥 두 공기 각오해!',
+  쭈꾸미: '매콤한 쭈꾸미에 콩나물 듬뿍, 마무리는 볶음밥!',
+  주꾸미: '매콤한 주꾸미에 콩나물 듬뿍, 마무리는 볶음밥!',
+  낙지: '매콤한 낙지볶음에 소면 비벼 먹으면 최고!',
+  감바스: '감바스 오일에 바게트 푹 찍어 먹는 게 진짜야!',
+  빙수: '시원한 빙수 한 숟갈로 더위도 고민도 싹!',
+  탕후루: '파삭! 탕후루는 소리부터 맛있어!',
+  커피: '커피도 좋지만 밥도 먹어야 해… 그래도 오늘은 커피!',
+  편의점: '편의점 1+1 꼭 확인하고, 컵라면 하나 추가!',
+  굶: '굶는다고? 진짜? …물이라도 많이 마셔!',
+  다이어트: '다이어트 중이구나. 그래도 오늘 한 입은 괜찮아!',
+};
+const LINE_BY_EMOJI = {
+  '🍜': '{m}, 면 불기 전에 후루룩 먹자!',
+  '🍝': '{m} 한 그릇, 포크로 돌돌 말아서 맛있게!',
+  '🍲': '뜨끈한 {m} 한 그릇이면 속이 확 풀릴 거야!',
+  '🫕': '{m}, 하나씩 퐁당 넣어서 천천히 즐기자!',
+  '🌶️': '매콤한 {m}! 쿨피스 하나 미리 챙겨!',
+  '🔥': '{m}, 오늘은 화끈하게 가자!',
+  '🍗': '{m}, 뼈까지 깨끗하게 뜯어 먹자!',
+  '🍕': '{m}, 치즈 늘어나는 거 사진부터 찍고!',
+  '🍔': '{m}, 두 손으로 잡고 크게 한 입!',
+  '🍟': '{m}, 케첩 듬뿍 찍어서!',
+  '🌭': '{m}, 케첩이랑 머스타드 지그재그로!',
+  '🍙': '{m} 하나 들고 든든하게 가자!',
+  '🍣': '{m}, 와사비 살짝 올려서 한 입에!',
+  '🐟': '싱싱한 {m}, 초장 콕 찍어 먹자!',
+  '🦐': '탱글탱글 {m}, 껍질 까는 수고는 맛으로 보상받아!',
+  '🦀': '{m}, 살 쏙쏙 발라 먹는 재미가 있지!',
+  '🦞': '오늘은 {m}! 플렉스하는 날이야!',
+  '🦪': '{m}, 바다 향 가득하게 즐겨!',
+  '🐙': '쫄깃한 {m}, 밥이랑 같이 먹으면 최고!',
+  '🦑': '쫄깃한 {m}, 밥이랑 같이 먹으면 최고!',
+  '🥩': '{m}! 고기는 언제나 옳아!',
+  '🥓': '지글지글 {m}, 쌈 싸서 크게 한 입!',
+  '🍖': '{m}, 고기 듬뿍 집어서 한 입 가득!',
+  '🍢': '{m}, 국물까지 호로록!',
+  '🍱': '{m}, 한 상 든든하게 먹자!',
+  '🍛': '{m}에 밥 쓱쓱 비벼 먹자!',
+  '🍚': '{m} 한 그릇! 한국인은 밥심이야!',
+  '🍳': '{m}, 계란은 언제나 정답이지!',
+  '🍤': '바삭한 {m}, 튀김옷 소리부터 맛있어!',
+  '🥗': '{m:로} 가볍게! 오후엔 날아다닐 거야!',
+  '🥟': '{m}, 간장 콕 찍어서 하나씩!',
+  '🥪': '{m:로} 가볍고 든든하게!',
+  '🍞': '{m}에 커피 한 잔, 완벽한 조합!',
+  '🥐': '갓 구운 {m}, 커피 한 잔이랑 같이!',
+  '🥯': '{m}에 크림치즈 듬뿍!',
+  '🥞': '{m}엔 막걸리 한 잔이 딱이야!',
+  '🧇': '{m}에 시럽 듬뿍!',
+  '🌮': '{m}, 소스 흘리지 않게 조심해서 크게 한 입!',
+  '🌯': '{m}, 소스 흘리지 않게 조심해서 크게 한 입!',
+  '🥙': '{m}, 소스 흘리지 않게 조심해서 크게 한 입!',
+  '🥘': '{m}, 오늘은 분위기 있게!',
+  '🥣': '속 편한 {m}, 오늘은 나를 아껴 주자!',
+  '🥢': '{m}, 여행 온 기분으로 즐겨!',
+  '🍡': '디저트 배는 따로 있지! {m} 먹자!',
+  '🍰': '디저트 배는 따로 있지! {m} 먹자!',
+  '🍩': '디저트 배는 따로 있지! {m} 먹자!',
+  '🍦': '{m:은} 녹기 전에 빨리!',
+  '🍧': '{m} 한 숟갈로 더위 싹!',
+  '☕': '{m}도 좋은데… 밥은 먹었지? 그래도 오늘은 {m}!',
+  '🧋': '{m}, 펄 많이! 당 충전 완료!',
+  '🍺': '{m}엔 안주가 필요해, 맛있는 거 같이 시켜!',
+  '🍶': '{m}엔 안주가 필요해, 맛있는 거 같이 시켜!',
+  '🍷': '{m} 한 잔, 오늘은 분위기 있게!',
+  '🍠': '{m:로} 건강하게 한 끼!',
+  '🍎': '{m:로} 건강하게 한 끼!',
+  '🏪': '{m} 털러 가자! 1+1 꼭 확인하고!',
+  '🛵': '{m} 시켜! 배달 팁은 눈 감고!',
+  '🫥': '굶는다고? 진짜? …물이라도 많이 마셔!',
+};
+const LINE_FALLBACK = ['{m:은} 오늘 너를 위해 준비된 메뉴야!', '고민 끝! 오늘은 {m}, 맛있게 먹어!'];
+const SPECIFIC_KEYS = Object.keys(LINE_SPECIFIC).map(k => [k.toLowerCase(), k]);
+
+function jong(w) { const c = w.charCodeAt(w.length - 1); return (c >= 0xAC00 && c <= 0xD7A3) ? (c - 0xAC00) % 28 : 0; }
+function fillLine(t, m) {
+  return t
+    .replace(/\{m:은\}/g, m + (jong(m) ? '은' : '는'))
+    .replace(/\{m:이\}/g, m + (jong(m) ? '이' : '가'))
+    .replace(/\{m:로\}/g, m + (jong(m) && jong(m) !== 8 ? '으로' : '로'))
+    .replace(/\{m\}/g, m);
+}
+function lineFor(name) {
+  const cat = bestMatch(name, EMOJI_KEYS);
+  const sp = bestMatch(name, SPECIFIC_KEYS);
+  // 전용 멘트는 그 키워드가 이름의 끝(요리 종류)을 차지할 때만 쓴다: 돈까스김밥 → 돈까스 멘트 X
+  if (sp && (!cat || sp.end >= cat.end)) return fillLine(LINE_SPECIFIC[sp.v], name);
+  if (cat && LINE_BY_EMOJI[cat.v]) return fillLine(LINE_BY_EMOJI[cat.v], name);
+  return fillLine(pick(LINE_FALLBACK), name);
+}
+
+/* UX 문구 원칙: 화면 안내·버튼·오류는 해요체(짧게), 캐릭터 말풍선만 반말.
+   용어: 목록 = "후보 메뉴", 항목 = "메뉴", 3칸 = "왼쪽·가운데·오른쪽 칸", 결과 = "결승 진출 → 당첨". */
+const COPY = {
+  needTwo: '메뉴를 2개 이상 넣으면 룰렛을 돌릴 수 있어요.',
+  empty: '메뉴 이름을 입력해 주세요.',
+  dup: m => `${m}${josa(m, '은', '는')} 이미 후보 메뉴에 있어요.`,
+  full: '메뉴는 12개까지 넣을 수 있어요. 하나를 지우고 다시 넣어 주세요.',
+  added: m => `${m}${josa(m, '을', '를')} 추가했어요.`,
+  addedOneMore: m => `${m}${josa(m, '을', '를')} 추가했어요. 하나만 더 넣으면 돌릴 수 있어요.`,
+  flipped: '막판에 결과가 뒤집혔어요.',
+  loser: m => `${m}${josa(m, '은', '는')} 아쉽게 탈락했어요.`,
+  ladderNote: k => `${k}번에서 출발했어요.`,
+  ladderCover: '출발하면 사다리가 공개돼요',
+  officeNote: pos => `김 대리가 ${pos} 모니터를 골랐어요.`,
+  officeNeed: '메뉴를 2~3개 넣어 주세요. 김 대리는 4개 이상 고민을 어려워해요.',
+  officeFull: '김 대리는 4개 이상 고민을 어려워해요.',
+  officeOver: '김 대리는 4개 이상 고민을 어려워해요. 앞의 3개만 고민할게요.',
+};
+
+/* ---------- character ---------- */
+/* 뽑이: 뽑기 캡슐 캐릭터. 위 뚜껑(.cap-top)은 결과 화면에서 열린다 */
+function charSVG() {
+  return `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+    <g class="cap-bot">
+      <path d="M18 60 A42 42 0 0 0 102 60 Z" fill="#FFFFFF" stroke="#D1D1D6" stroke-width="1.5"/>
+      <ellipse cx="48" cy="78" rx="4" ry="5.5" fill="#1D1D1F"/><circle cx="49.5" cy="76" r="1.4" fill="#fff"/>
+      <ellipse cx="72" cy="78" rx="4" ry="5.5" fill="#1D1D1F"/><circle cx="73.5" cy="76" r="1.4" fill="#fff"/>
+      <path d="M54 88 Q60 95 66 88" fill="none" stroke="#1D1D1F" stroke-width="3" stroke-linecap="round"/>
+      <ellipse cx="38" cy="88" rx="6" ry="3.5" fill="#FF8FA3" opacity=".6"/>
+      <ellipse cx="82" cy="88" rx="6" ry="3.5" fill="#FF8FA3" opacity=".6"/>
+    </g>
+    <g class="cap-top">
+      <path d="M18 60 A42 42 0 0 1 102 60 Z" style="fill: var(--accent)"/>
+      <rect x="16" y="56" width="88" height="8" rx="4" fill="#E5E5EA"/>
+      <ellipse cx="44" cy="36" rx="9" ry="5" fill="#FFFFFF" opacity=".35"/>
+    </g>
+  </svg>`;
+}
+$('mascotMini').innerHTML = charSVG();
+$('charBig').innerHTML = charSVG();
+
+/* ---------- lights ---------- */
+['lightsTop', 'lightsBot'].forEach((id, k) => {
+  let h = '';
+  for (let i = 0; i < 20; i++) h += `<span class="dot" style="--i:${k ? 19 - i : i}"></span>`;
+  $(id).innerHTML = h;
+});
+
+/* ---------- menus ---------- */
+// 처음 열면 직장인 점심 단골 메뉴로 시작한다 (앞의 3개는 김 대리 모니터에도 그대로 쓰인다)
+const DEFAULT_MENUS = ['김치찌개', '돈까스', '쌀국수', '제육볶음', '초밥', '마라탕'];
+const STORE_KEY = 'random-food-list-v2';
+let menus = DEFAULT_MENUS.slice();
+try { const s = JSON.parse(localStorage.getItem(STORE_KEY)); if (Array.isArray(s)) menus = s.slice(0, 12); } catch (e) {}
+const save = () => { try { localStorage.setItem(STORE_KEY, JSON.stringify(menus)); } catch (e) {} };
+
+let busy = false;
+function hint(text, warn) { const h = $('hint'); h.textContent = text; h.classList.toggle('warn', !!warn); }
+
+// 김 대리는 메뉴 3개까지만 고민한다. 다른 방식은 12개까지.
+function maxMenus() { return activeMode === 'office' ? 3 : 12; }
+// 지금 방식에 맞는 안내 문구 (김 대리 화면에서는 김 대리 전용 문구)
+function guideHint() {
+  const n = menus.length;
+  if (activeMode === 'office') return n < 2 ? COPY.officeNeed : n > 3 ? COPY.officeOver : `김 대리가 메뉴 ${n}개를 두고 고민해요.`;
+  if (n < 2) return COPY.needTwo;
+  // 안내 칸이 비지 않도록, 지금 방식과 메뉴 수를 알려 준다
+  return activeMode === 'ladder'
+    ? `메뉴 ${n}개로 사다리를 만들어요. 최대 12개까지 넣을 수 있어요.`
+    : `메뉴 ${n}개로 룰렛을 돌려요. 최대 12개까지 넣을 수 있어요.`;
+}
+function renderChips() {
+  const ul = $('chips');
+  ul.innerHTML = '';
+  menus.forEach((m, i) => {
+    if (menus.length === 2 && i === 1) {
+      const sep = document.createElement('li'); sep.className = 'chip vs-sep'; sep.textContent = 'VS'; ul.appendChild(sep);
+    }
+    const li = document.createElement('li');
+    li.className = 'chip' + (activeMode === 'office' && i >= 3 ? ' over' : '');
+    li.innerHTML = `<span class="em">${emojiFor(m)}</span><span class="nm">${esc(m)}</span><button type="button" aria-label="${esc(m)} 삭제">✕</button>`;
+    li.querySelector('button').addEventListener('click', () => { menus.splice(i, 1); changed(); });
+    ul.appendChild(li);
+  });
+  const pill = $('modePill');
+  const n = menus.length;
+  pill.textContent = n === 0 ? '비어 있음' : n === 1 ? '1개' : n === 2 ? '양자택일' : `${n}개 중 1개`;
+  pill.classList.toggle('duel', n === 2);
+  $('spinBtn').disabled = menus.length < 2 || busy;
+  $('ladderBtn').disabled = menus.length < 2 || busy;
+  $('officeBtn').disabled = menus.length < 2 || busy;
+  $('addBtn').disabled = menus.length >= maxMenus() || busy;
+  $('resetMenus').disabled = busy;
+  $('clearMenus').disabled = busy || !menus.length;
+}
+function changed() {
+  // 후보 메뉴가 바뀌면 화면에 안 보이는 방식까지 모두 다시 준비한다
+  save(); renderChips(); resetReels(); resetVS(); newLadder(); resetOffice();
+  hint(guideHint());
+}
+
+$('clearMenus').addEventListener('click', () => {
+  if (busy || !menus.length) return;
+  menus = []; changed();
+  hint('메뉴를 모두 지웠어요. 먹고 싶은 메뉴를 넣어 주세요.');
+  $('menuInput').focus();
+});
+$('resetMenus').addEventListener('click', () => {
+  if (busy) return;
+  menus = DEFAULT_MENUS.slice(); changed();
+  hint('기본 메뉴로 되돌렸어요.');
+});
+$('addForm').addEventListener('submit', e => {
+  e.preventDefault();
+  if (busy) return;
+  const inp = $('menuInput');
+  const v = inp.value.trim().replace(/\s+/g, ' ');
+  const form = $('addForm');
+  const nope = msg => { hint(msg, true); form.classList.remove('shake'); void form.offsetWidth; form.classList.add('shake'); };
+  if (!v) return nope(COPY.empty);
+  if (menus.includes(v)) return nope(COPY.dup(v));
+  if (menus.length >= maxMenus()) return nope(activeMode === 'office' ? COPY.officeFull : COPY.full);
+  menus.push(v); inp.value = ''; changed();
+  hint(menus.length < 2 ? COPY.addedOneMore(v) : COPY.added(v));
+});
+
+/* ---------- reels ---------- */
+const reels = [0, 1, 2].map(i => ({ win: $('reel' + i), strip: $('strip' + i), items: [], n: 1, p: 0, speed: 0, anim: null, lastP: 0 }));
+
+function renderStrip(r, items) {
+  r.items = items; r.n = items.length;
+  const reps = Math.max(4, Math.ceil(24 / r.n) + 2);
+  let h = '';
+  for (let k = 0; k < reps; k++) for (const m of items) h += `<div class="item"><span class="ie">${emojiFor(m)}</span><span class="in">${esc(m)}</span></div>`;
+  r.strip.innerHTML = h;
+  draw(r);
+}
+function draw(r) {
+  const disp = ((r.p % r.n) + r.n) % r.n + r.n;
+  r.strip.style.transform = `translateY(${-(disp - 1) * H}px)`;
+}
+const centerName = r => r.items[((Math.round(r.p) % r.n) + r.n) % r.n];
+
+function resetReels() {
+  const list = menus.length ? menus : ['?'];
+  reels.forEach((r, i) => { r.speed = 0; r.anim = null; r.p = i % list.length; renderStrip(r, list); });
+  $('reels').classList.remove('win', 'reach');
+}
+
+let reachWatch = false;
+let last = performance.now();
+function tick(t) {
+  const dt = Math.min(0.05, (t - last) / 1000); last = t;
+  for (const r of reels) {
+    if (r.anim) {
+      const a = r.anim, k = Math.min(1, (t - a.t0) / a.d);
+      r.p = a.p0 + (a.pT - a.p0) * a.ease(k);
+      if (k >= 1) { r.p = a.pT; r.anim = null; r.speed = 0; a.done(); }
+    } else if (r.speed > 0) r.p += r.speed * dt;
+    else { r.win.classList.remove('blur'); continue; }
+    const v = Math.abs(r.p - r.lastP) / (dt || 0.016);
+    r.lastP = r.p;
+    r.win.classList.toggle('blur', v > 9);
+    draw(r);
+  }
+  if (reachWatch) {
+    const nm = centerName(reels[1]);
+    $('finA').classList.toggle('on', nm === vsNames[0]);
+    $('finB').classList.toggle('on', nm === vsNames[1]);
+  }
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+
+function stopAt(r, name, d, power) {
+  const idx = r.items.indexOf(name);
+  const v = Math.max(r.speed, 4);
+  if (reduce) d = Math.min(d, 300);
+  return new Promise(done => {
+    // 멈추는 시간은 d로 고정하고, 목표 칸은 이상적인 정지 지점에서 가장 가까운 칸으로 (메뉴가 많아도 느려지지 않게)
+    const ideal = r.p + v * (d / 1000) / power;
+    const cur = ((ideal % r.n) + r.n) % r.n;
+    let delta = (((idx - cur) % r.n) + r.n) % r.n;
+    if (delta > r.n / 2 && ideal + delta - r.n > r.p + 1) delta -= r.n;
+    r.anim = { p0: r.p, pT: ideal + delta, t0: performance.now(), d, ease: k => 1 - Math.pow(1 - k, power), done };
+  }).then(() => { r.win.classList.remove('thunk'); void r.win.offsetWidth; r.win.classList.add('thunk'); });
+}
+function nudge(r, steps, d) {
+  const back = k => { const c1 = 1.9, c3 = c1 + 1; return 1 + c3 * Math.pow(k - 1, 3) + c1 * Math.pow(k - 1, 2); };
+  return new Promise(done => { r.anim = { p0: r.p, pT: r.p + steps, t0: performance.now(), d: reduce ? 100 : d, ease: back, done }; });
+}
+function spinTo(r, name, d) {
+  const idx = r.items.indexOf(name);
+  const cur = ((r.p % r.n) + r.n) % r.n;
+  const pT = r.p + r.n * Math.max(2, Math.ceil(10 / r.n)) + (((idx - cur) % r.n) + r.n) % r.n;
+  return new Promise(done => { r.anim = { p0: r.p, pT, t0: performance.now(), d: reduce ? 150 : d, ease: k => 1 - Math.pow(1 - k, 3), done }; });
+}
+
+/* ---------- VS bar ---------- */
+let vsNames = [null, null];
+function setFin(el, name, label) {
+  el.className = 'fin';
+  el.innerHTML = `<span class="fe">${emojiFor(name)}</span><span class="fn">${esc(name)}</span><span class="fl">${label}</span>`;
+}
+function resetVS() {
+  vsNames = [null, null];
+  $('vs').classList.remove('live');
+  $('finA').className = 'fin empty'; $('finA').innerHTML = '<span class="fe">?</span><span class="fn">결승 진출 1</span><span class="fl">왼쪽 칸</span>';
+  $('finB').className = 'fin empty'; $('finB').innerHTML = '<span class="fe">?</span><span class="fn">결승 진출 2</span><span class="fl">오른쪽 칸</span>';
+}
+function setStatus(text, tone) { const s = $('status'); s.textContent = text; s.dataset.tone = tone; $('machine').dataset.mode = tone; }
+
+/* ---------- spin sequence ---------- */
+async function spin() {
+  if (busy || menus.length < 2) return;
+  setBusy(true);
+  resetVS(); $('reels').classList.remove('win', 'reach');
+  setStatus('회전 중', 'spin');
+
+  // 전체 연출 약 5초: 회전 0.5 → 왼쪽 0.6 → 오른쪽 0.6 → 리치 0.5 → 가운데 1.6 → 맞춤 0.5 → 결과
+  reels.forEach((r, i) => { renderStrip(r, shuffle(menus)); r.speed = 22 + i * 2; });
+  const [A, B] = shuffle(menus).slice(0, 2);
+  const ban = bannedMenu();
+  const W = A === ban ? B : B === ban ? A : (Math.random() < 0.5 ? A : B);
+  const L = W === A ? B : A;
+  await sleep(400);
+
+  await stopAt(reels[0], A, 600, 3);
+  vsNames[0] = A; setFin($('finA'), A, '결승 진출');
+  await sleep(100);
+  await stopAt(reels[2], B, 600, 3);
+  vsNames[1] = B; setFin($('finB'), B, '결승 진출');
+
+  // REACH: 가운데 릴은 두 결승 진출 메뉴만 번갈아 돈다
+  setStatus('리치!', 'reach');
+  $('reels').classList.add('reach'); $('vs').classList.add('live');
+  const pp = reels[1].p; renderStrip(reels[1], [A, B]); reels[1].p = pp;
+  reachWatch = true;
+  await sleep(400);
+
+  const fake = Math.random() < 0.38;
+  await stopAt(reels[1], fake ? L : W, fake ? 1300 : 1600, 4);
+  let flipped = false;
+  if (fake) {
+    setStatus(`${L}…?`, 'reach');
+    await sleep(400);
+    setStatus('역전!', 'flip');
+    await sleep(150);
+    await nudge(reels[1], 1, 380);
+    flipped = true;
+  }
+  reachWatch = false;
+
+  const winEl = W === A ? $('finA') : $('finB'), loseEl = W === A ? $('finB') : $('finA');
+  winEl.classList.remove('on'); loseEl.classList.remove('on');
+  winEl.classList.add('win'); loseEl.classList.add('lose');
+  $('vs').classList.remove('live'); $('reels').classList.remove('reach');
+  setStatus('당첨!', 'win');
+
+  await spinTo(W === A ? reels[2] : reels[0], W, 500);
+  $('reels').classList.add('win');
+  confetti();
+  await sleep(350);
+
+  setBusy(false);
+  addHistory(W);
+  openSheet(W, L, flipped);
+}
+$('spinBtn').addEventListener('click', spin);
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && !$('sheet').hidden) { closeSheet(); return; }
+  if (e.code !== 'Space' || !$('sheet').hidden) return;
+  const tag = document.activeElement && document.activeElement.tagName;
+  if (tag === 'INPUT' || tag === 'BUTTON') return;
+  e.preventDefault();
+  modePlay();
+});
+
+/* ---------- history ---------- */
+const hist = [];
+// 최근 2번 연속 같은 메뉴가 나왔다면, 이번엔 그 메뉴가 나오지 않게 한다 (2연속까지는 허용, 룰렛·사다리 공통)
+const bannedMenu = () => (hist.length >= 2 && hist[0] === hist[1] && menus.includes(hist[0])) ? hist[0] : null;
+function addHistory(w) {
+  hist.unshift(w); if (hist.length > 8) hist.pop();
+  $('hist').innerHTML = hist.map(h => `<li><span class="em">${emojiFor(h)}</span> ${esc(h)}</li>`).join('');
+}
+
+/* ---------- sheet ---------- */
+// 결과 이모지는 캔버스에 한 번 그려 이미지로 쓴다 (큰 글자 애니메이션이 버벅이던 문제)
+const emojiImgCache = new Map();
+function emojiImage(e) {
+  if (emojiImgCache.has(e)) return emojiImgCache.get(e);
+  let url = '';
+  try {
+    const s = 272, c = document.createElement('canvas');
+    c.width = c.height = s;
+    const x = c.getContext('2d');
+    x.font = `${Math.round(s * 0.78)}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
+    x.textAlign = 'center'; x.textBaseline = 'middle';
+    x.fillText(e, s / 2, s / 2 + s * 0.05);
+    url = c.toDataURL('image/png');
+  } catch (err) {}
+  emojiImgCache.set(e, url);
+  return url;
+}
+let ticketNo = 0;
+function openSheet(W, L, flipped, note) {
+  $('btnAgain').textContent = MODE_AGAIN[activeMode];
+  ticketNo++;
+  $('tEmoji').textContent = emojiFor(W);
+  $('popEmoji').src = emojiImage(emojiFor(W));
+  document.body.classList.add('sheet-open');
+  const d = new Date(), p2 = n => String(n).padStart(2, '0');
+  $('tLabel').textContent = `${d.getFullYear()}.${p2(d.getMonth() + 1)}.${p2(d.getDate())} (${'일월화수목금토'[d.getDay()]}) ${p2(d.getHours())}:${p2(d.getMinutes())}`;
+  $('tName').textContent = W;
+  $('bubble').textContent = lineFor(W);
+  $('tLine').textContent = flipped ? COPY.flipped : '';
+  $('tLine').hidden = !flipped;
+  $('tLine2').textContent = L ? COPY.loser(L) : (note || '');
+  const s = $('sheet');
+  s.hidden = false;
+  requestAnimationFrame(() => requestAnimationFrame(() => s.classList.add('open')));
+  setTimeout(() => $('btnOk').focus({ preventScroll: true }), 300);
+}
+function closeSheet(then) {
+  const s = $('sheet');
+  s.classList.remove('open');
+  setTimeout(() => {
+    s.hidden = true;
+    document.body.classList.remove('sheet-open');
+    if (then) { then(); return; }
+    if (activeMode === 'ladder') newLadder();
+    if (activeMode === 'office') resetOffice();
+    setStatus('결정 완료', 'idle');
+    $(MODE_BTN[activeMode]).focus({ preventScroll: true });
+  }, reduce ? 0 : 280);
+}
+$('btnOk').addEventListener('click', () => closeSheet());
+$('btnAgain').addEventListener('click', () => closeSheet(modePlay));
+$('sheet').addEventListener('click', e => { if (e.target.id === 'sheet') closeSheet(); });
+
+/* ---------- confetti ---------- */
+function confetti() {
+  if (reduce) return;
+  const c = $('confetti'), ctx = c.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  c.width = innerWidth * dpr; c.height = innerHeight * dpr; ctx.scale(dpr, dpr);
+  const css = getComputedStyle(document.documentElement);
+  const cols = ['--accent', '--orange', '--pink', '--green', '--red'].map(v => css.getPropertyValue(v).trim());
+  const ps = Array.from({ length: 90 }, () => ({
+    x: innerWidth / 2 + (Math.random() - .5) * 120, y: innerHeight * .45,
+    vx: (Math.random() - .5) * 14, vy: -Math.random() * 14 - 4,
+    r: Math.random() * Math.PI, vr: (Math.random() - .5) * .4,
+    w: 6 + Math.random() * 6, h: 4 + Math.random() * 4, c: pick(cols),
+  }));
+  const t0 = performance.now();
+  (function frame(t) {
+    ctx.clearRect(0, 0, innerWidth, innerHeight);
+    for (const p of ps) {
+      p.vy += .42; p.vx *= .99; p.x += p.vx; p.y += p.vy; p.r += p.vr;
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.fillStyle = p.c;
+      ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); ctx.restore();
+    }
+    if (t - t0 < 2600) requestAnimationFrame(frame); else ctx.clearRect(0, 0, innerWidth, innerHeight);
+  })(t0);
+}
+
+/* ---------- busy / mode pager ---------- */
+let activeMode = 'slot';
+const pager = $('pager');
+function setBusy(v) {
+  busy = v;
+  document.body.classList.toggle('busy', v);
+  pager.classList.toggle('locked', v);
+  $('tabSlot').disabled = v; $('tabLadder').disabled = v; $('tabOffice').disabled = v;
+  $('chips').classList.toggle('locked', v);
+  renderChips();
+  document.querySelectorAll('.lad-start').forEach(b => { b.disabled = v; });
+}
+const MODES = ['slot', 'ladder', 'office'];
+const MODE_TABS = ['tabSlot', 'tabLadder', 'tabOffice'];
+const MODE_IDLE = ['대기 중', '출발 대기', '대기 중'];
+const MODE_BTN = { slot: 'spinBtn', ladder: 'ladderBtn', office: 'officeBtn' };
+const MODE_AGAIN = { slot: '다시 돌리기', ladder: '다시 타기', office: '다시 고르기' };
+const modePlay = () => (activeMode === 'slot' ? spin() : activeMode === 'ladder' ? ladderPlay(null) : officePlay());
+let activeIdx = 0;
+function setActive(idx) {
+  idx = Math.max(0, Math.min(2, idx));
+  if (MODES[idx] === activeMode) return;
+  activeIdx = idx; activeMode = MODES[idx];
+  MODE_TABS.forEach((t, i) => $(t).setAttribute('aria-selected', String(i === idx)));
+  [0, 1, 2].forEach(i => $('dot' + i).classList.toggle('on', i === idx));
+  if (!busy) setStatus(MODE_IDLE[idx], 'idle');
+  renderChips();
+  hint(guideHint());
+}
+// 넘기는 도중에는 상태를 바꾸지 않고, 스크롤이 멈춘 뒤 한 번만 바꾼다 (중간에 왔다 갔다 하며 깜빡이던 문제)
+let scrollTarget = null, scrollTimer = 0;
+function goTo(idx) {
+  if (busy) return;
+  scrollTarget = idx;
+  setActive(idx);
+  pager.scrollTo({ left: idx * pager.clientWidth, behavior: reduce ? 'auto' : 'smooth' });
+}
+function settleScroll() {
+  scrollTarget = null;
+  if (!busy) setActive(Math.round(pager.scrollLeft / pager.clientWidth));
+}
+pager.addEventListener('scroll', () => {
+  clearTimeout(scrollTimer);
+  if (scrollTarget !== null && Math.abs(pager.scrollLeft - scrollTarget * pager.clientWidth) < 2) { settleScroll(); return; }
+  scrollTimer = setTimeout(settleScroll, 140);
+}, { passive: true });
+$('tabSlot').addEventListener('click', () => goTo(0));
+$('tabLadder').addEventListener('click', () => goTo(1));
+$('tabOffice').addEventListener('click', () => goTo(2));
+// 마우스로도 옆으로 끌어서 넘길 수 있게
+let dragX = null;
+pager.addEventListener('pointerdown', e => { if (e.pointerType === 'mouse' && !e.target.closest('button')) dragX = e.clientX; });
+window.addEventListener('pointerup', e => {
+  if (dragX === null) return;
+  const dx = e.clientX - dragX; dragX = null;
+  if (Math.abs(dx) > 50) goTo(Math.max(0, Math.min(2, activeIdx + (dx < 0 ? 1 : -1))));
+});
+
+/* ---------- ladder ---------- */
+const ladder = { n: 0, rows: 9, rungs: [], bottom: [], done: false, start: null, X: null, Y: null };
+const LH = 260;
+
+function newLadder() {
+  const n = menus.length;
+  ladder.n = n; ladder.done = false; ladder.start = null; ladder.revealed = false;
+  if (n >= 2) {
+    ladder.rows = Math.max(8, Math.min(12, n + 5));
+    for (let tries = 0; tries < 60; tries++) {
+      const rungs = [];
+      for (let r = 0; r < ladder.rows; r++) {
+        const row = [];
+        for (let i = 0; i < n - 1; i++) row.push(!(i > 0 && row[i - 1]) && Math.random() < 0.42);
+        rungs.push(row);
+      }
+      let ok = true;
+      for (let i = 0; i < n - 1; i++) if (!rungs.some(row => row[i])) { ok = false; break; }
+      ladder.rungs = rungs;
+      if (ok) break;
+    }
+    ladder.bottom = shuffle(menus);
+  }
+  renderLadder();
+}
+
+function traceLadder(start) {
+  let c = start;
+  const pts = [[c, -1]];
+  for (let r = 0; r < ladder.rows; r++) {
+    pts.push([c, r]);
+    if (ladder.rungs[r][c]) { c++; pts.push([c, r]); }
+    else if (c > 0 && ladder.rungs[r][c - 1]) { c--; pts.push([c, r]); }
+  }
+  pts.push([c, ladder.rows]);
+  return { pts, end: c };
+}
+const ladderD = pts => pts.map((p, k) => `${k ? 'L' : 'M'}${ladder.X(p[0]).toFixed(1)} ${ladder.Y(p[1]).toFixed(1)}`).join(' ');
+
+function renderLadder() {
+  const box = $('ladder');
+  const n = ladder.n;
+  if (n < 2) { box.innerHTML = `<div class="lad-empty">${COPY.needTwo}</div>`; return; }
+  const w = box.clientWidth || 300;
+  const padX = Math.max(18, Math.min(44, w / (n * 2)));
+  const sp = (w - 2 * padX) / (n - 1);
+  const X = i => padX + i * sp;
+  const Y = r => r < 0 ? 0 : r >= ladder.rows ? LH : LH * (r + 1) / (ladder.rows + 1);
+  ladder.X = X; ladder.Y = Y;
+  let lines = '';
+  for (let i = 0; i < n; i++) lines += `<line class="lad-line" x1="${X(i)}" y1="0" x2="${X(i)}" y2="${LH}"/>`;
+  ladder.rungs.forEach((row, r) => row.forEach((on, i) => {
+    if (on) lines += `<line class="lad-line" x1="${X(i)}" y1="${Y(r)}" x2="${X(i + 1)}" y2="${Y(r)}"/>`;
+  }));
+  const bs = Math.max(18, Math.min(30, sp - 4));
+  const ts = Math.max(18, Math.min(36, sp - 4));
+  let top = '', bot = '';
+  for (let i = 0; i < n; i++) {
+    top += `<button type="button" class="lad-start${ladder.start === i ? ' on' : ''}" id="ls${i}" data-i="${i}" style="left:${X(i)}px;width:${bs}px;height:${bs}px" aria-label="${i + 1}번에서 출발"${busy ? ' disabled' : ''}>${i + 1}</button>`;
+    bot += `<div class="lad-tile" id="lt${i}" style="left:${X(i)}px;width:${ts}px">?</div>`;
+  }
+  box.innerHTML = `<div class="lad-top">${top}</div>
+    <svg viewBox="0 0 ${w} ${LH}" aria-hidden="true">${lines}<path class="lad-path" id="ladPath" d=""/><circle class="lad-dot" id="ladDot" r="7" cx="-50" cy="-50"/></svg>
+    ${ladder.revealed ? '' : `<div class="lad-cover" id="ladCover"><span class="lc-q">?</span><span>${COPY.ladderCover}</span></div>`}
+    <div class="lad-bot">${bot}</div>`;
+  box.querySelectorAll('.lad-start').forEach(b => b.addEventListener('click', () => ladderPlay(Number(b.dataset.i))));
+  if (ladder.done && ladder.start !== null) {
+    const { pts, end } = traceLadder(ladder.start);
+    $('ladPath').setAttribute('d', ladderD(pts));
+    revealTile(end, false);
+  }
+}
+function revealTile(i, animate) {
+  const t = $('lt' + i); if (!t) return;
+  const name = ladder.bottom[i];
+  t.textContent = emojiFor(name); t.title = name;
+  t.classList.add('hit');
+  if (!animate) t.style.animation = 'none';
+}
+
+async function ladderPlay(start) {
+  if (busy || menus.length < 2) return;
+  if (ladder.done) { newLadder(); await sleep(200); }
+  if (start === null) start = rand(ladder.n);
+  setBusy(true);
+  ladder.start = start;
+  if (!ladder.revealed) {
+    ladder.revealed = true;
+    const cover = $('ladCover');
+    if (cover) { cover.classList.add('off'); await sleep(300); cover.remove(); }
+  }
+  document.querySelectorAll('.lad-start').forEach(b => b.classList.toggle('on', Number(b.dataset.i) === start));
+  setStatus('이동 중', 'spin');
+  const { pts, end } = traceLadder(start);
+  // 같은 메뉴 3연속 방지: 도착할 칸이 금지 메뉴면 가려진 다른 칸과 몰래 자리를 바꾼다
+  const ban = bannedMenu();
+  if (ban && ladder.bottom[end] === ban) {
+    const j = (end + 1 + rand(ladder.n - 1)) % ladder.n;
+    [ladder.bottom[end], ladder.bottom[j]] = [ladder.bottom[j], ladder.bottom[end]];
+  }
+  const path = $('ladPath'), dot = $('ladDot');
+  path.setAttribute('d', ladderD(pts));
+  const len = path.getTotalLength();
+  path.style.strokeDasharray = len; path.style.strokeDashoffset = len;
+  // 출발부터 결과까지 약 4~5초: 가림막 0.3 → 내려가기 2.4~3.4 → 공개 0.5
+  const dur = reduce ? 200 : Math.max(3200, Math.min(3800, len * 3));
+  await new Promise(done => {
+    const t0 = performance.now();
+    (function frame(t) {
+      const k = Math.min(1, (t - t0) / dur);
+      const e = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+      path.style.strokeDashoffset = len * (1 - e);
+      const p = path.getPointAtLength(len * e);
+      dot.setAttribute('cx', p.x); dot.setAttribute('cy', p.y);
+      if (k < 1) requestAnimationFrame(frame); else done();
+    })(t0);
+  });
+  dot.setAttribute('cx', -50);
+  const W = ladder.bottom[end];
+  revealTile(end, true);
+  ladder.done = true;
+  setStatus('도착!', 'win');
+  confetti();
+  await sleep(500);
+  setBusy(false);
+  addHistory(W);
+  openSheet(W, null, false, COPY.ladderNote(start + 1));
+}
+$('ladderBtn').addEventListener('click', () => ladderPlay(null));
+if (window.ResizeObserver) new ResizeObserver(() => { if (!busy) renderLadder(); }).observe($('ladder'));
+else addEventListener('resize', () => { if (!busy) renderLadder(); });
+
+/* ---------- office: 김 대리(뒷모습)가 모니터(2~3대)를 번갈아 보다가 고른 쪽 줄로 간다 ---------- */
+// 후보가 3개 이상이면 모니터 3대, 2개면 2대. 장면은 모니터 수에 맞춰 그린다.
+const office = { mons: [], n: 0 };
+const OF_LAYOUT = {
+  2: { w: 110, h: 66, cs: [69, 251], zoom: 2.2, pos: ['왼쪽', '오른쪽'], dirs: [-1, 1], cut: 7 },
+  3: { w: 92, h: 62, cs: [56, 160, 264], zoom: 2.5, pos: ['왼쪽', '가운데', '오른쪽'], dirs: [-1, 0, 1], cut: 6 },
+};
+const OF_TOP = 14;
+function ofFigure(x, y, s, q2) {
+  return `<g transform="translate(${x} ${y}) scale(${s})"><g class="of-qp${q2 ? ' q2' : ''}"><circle cx="0" cy="-10" r="9"/><path d="M-16 14 Q-15 0 0 -1 Q15 0 16 14 Z"/></g></g>`;
+}
+function renderOffice(n) {
+  office.n = n;
+  const L = OF_LAYOUT[n], { w, h } = L, bot = OF_TOP + h;
+  let mons = '', gazes = '', queues = '';
+  L.cs.forEach((c, i) => {
+    const x = c - w / 2;
+    mons += `<g class="of-mon" id="ofMon${i}" style="transform-origin:${c}px ${OF_TOP + h / 2}px">
+      <rect x="${c - 3}" y="0" width="6" height="${OF_TOP}" fill="#8E8E93"/>
+      <rect class="of-frame" x="${x}" y="${OF_TOP}" width="${w}" height="${h}" rx="9"/>
+      <rect class="of-screen" x="${x + 6}" y="${OF_TOP + 6}" width="${w - 12}" height="${h - 12}" rx="5"/>
+      <rect class="of-ring" x="${x + 1.5}" y="${OF_TOP + 1.5}" width="${w - 3}" height="${h - 3}" rx="8"/>
+      <text class="of-emo" id="ofEmo${i}" x="${c}" y="${OF_TOP + h * 0.42}" text-anchor="middle" dominant-baseline="middle">?</text>
+      <text class="of-name" id="ofName${i}" x="${c}" y="${bot - 11}" text-anchor="middle">메뉴 대기</text>
+    </g>`;
+    gazes += `<g class="of-gaze of-fade" id="ofGaze${i}">
+      <polygon points="160,178 ${x + 10},${bot} ${x + w - 10},${bot}"/>
+      <line x1="156" y1="175" x2="${c}" y2="${bot + 3}"/>
+      <line x1="152" y1="177" x2="${c - w / 4}" y2="${bot + 3}"/>
+      <line x1="164" y1="177" x2="${c + w / 4}" y2="${bot + 3}"/>
+      <circle class="of-glint" cx="${c}" cy="${bot - 1}" r="4"/>
+    </g>`;
+    queues += ofFigure(c, 101, .78, i % 2) + ofFigure(c, 116, .9, !(i % 2)) + ofFigure(c, 131, 1.02, i % 2);
+  });
+  $('office').innerHTML = `<svg viewBox="0 0 320 270" role="img" aria-label="모니터를 번갈아 보며 메뉴를 고르는 김 대리의 뒷모습">
+    <rect class="of-floor" x="0" y="196" width="320" height="74"/>
+    ${mons}${gazes}
+    <g class="of-fade">${queues}</g>
+    <g class="of-me of-fade" id="ofMe"><g class="of-bob">
+      <path d="M112 270 Q114 230 160 224 Q206 230 208 270 Z" fill="#FFFFFF" stroke="#D1D1D6" stroke-width="1.5"/>
+      <path d="M160 270 L160 236" stroke="#E5E5EA" stroke-width="1.5"/>
+      <path d="M145 227 Q160 236 175 227" fill="none" stroke="#FF9F0A" stroke-width="3" stroke-linecap="round"/>
+      <g class="of-head" id="ofHead">
+        <ellipse cx="133.5" cy="204" rx="5" ry="7" fill="#FFD0B0"/>
+        <ellipse cx="186.5" cy="204" rx="5" ry="7" fill="#FFD0B0"/>
+        <circle cx="160" cy="202" r="26" fill="#FFD9BF"/>
+        <path d="M134 204 A26 26 0 1 1 186 204 Q173 216 160 216 Q147 216 134 204 Z" fill="#2B2B2E"/>
+        <path d="M149 184 Q160 178 171 184" fill="none" stroke="#545458" stroke-width="2" stroke-linecap="round"/>
+      </g>
+    </g></g>
+    <g class="of-bubble of-fade">
+      <circle cx="158" cy="174" r="3"/>
+      <rect id="ofBubbleRect" x="114" y="146" width="92" height="24" rx="12"/>
+      <text class="of-think" id="ofThink" x="160" y="158.5" text-anchor="middle" dominant-baseline="middle">음…</text>
+    </g>
+  </svg>`;
+}
+function setMon(i, name) {
+  office.mons[i] = name;
+  const cut = OF_LAYOUT[office.n].cut;
+  $('ofEmo' + i).textContent = name ? emojiFor(name) : '?';
+  $('ofName' + i).textContent = name ? (name.length > cut ? name.slice(0, cut) + '…' : name) : '메뉴 대기';
+}
+function lookAt(idx) { // idx = 바라볼 모니터 번호, null = 정면
+  const dir = idx === null ? null : OF_LAYOUT[office.n].dirs[idx];
+  $('ofHead').style.transform = dir === null ? '' : dir === 0 ? 'translate(0, -3px)' : `translate(${dir * 3}px, 0) rotate(${dir * 14}deg)`;
+  for (let i = 0; i < office.n; i++) {
+    $('ofMon' + i).classList.toggle('on', i === idx);
+    $('ofGaze' + i).classList.toggle('on', i === idx);
+  }
+}
+
+/* 김 대리 속마음: 후보 메뉴의 성격(국물·매운·헤비·가벼운…)을 보고 끌림/반박을 번갈아 말한다 */
+const TRAITS_BY_EMOJI = {
+  '🍲': ['soup'], '🍜': ['soup', 'noodle'], '🫕': ['soup', 'heavy'], '🍝': ['noodle'],
+  '🍖': ['meat', 'heavy'], '🥩': ['meat', 'heavy'], '🥓': ['meat', 'heavy'], '🍗': ['meat', 'heavy'],
+  '🍕': ['heavy'], '🍔': ['heavy'], '🍟': ['heavy'], '🍱': ['heavy', 'rice'], '🍛': ['rice', 'heavy'],
+  '🍚': ['rice'], '🍙': ['rice', 'light'], '🍳': ['rice'], '🔥': ['spicy', 'heavy'], '🌶️': ['spicy'],
+  '🥗': ['light'], '🥣': ['light', 'soup'], '🍣': ['light'], '🥪': ['light'], '🍞': ['light'], '🥐': ['light'], '🥯': ['light'],
+  '🍰': ['sweet'], '🍩': ['sweet'], '🍦': ['sweet'], '🍧': ['sweet'], '🍡': ['sweet'], '🧇': ['sweet'],
+};
+const SPICY_WORDS = /매운|매콤|마라|불닭|김치|짬뽕|떡볶이|제육|닭발|쭈꾸미|주꾸미|낙지|엽떡|육개장|부대/;
+function traitsOf(name) {
+  const t = new Set(TRAITS_BY_EMOJI[emojiFor(name)] || []);
+  if (SPICY_WORDS.test(name)) t.add('spicy');
+  return [...t];
+}
+const QUICK = ['이거?', '저거?', '음…', '흠…', '어…', '아 몰라', '잠깐만'];
+const PRO = {
+  any: ['아 {m} 끌리네', '{m}… 침 고인다', '오 {m} 괜찮은데?', '{m:이} 날 부른다', '{m}, 너로 정했다…?'],
+  soup: ['국물 땡기네… {m}', '뜨끈한 {m} 좋다', '{m} 국물에 밥 말까'],
+  spicy: ['매운 거 땡긴다, {m}!', '스트레스엔 {m}이지'],
+  noodle: ['후루룩 {m} 끌려', '면이 땡기는 날이야'],
+  meat: ['고기 먹고 싶다… {m}', '단백질 보충, {m}'],
+  heavy: ['든든하게 {m} 갈까', '오늘 야근인데 {m}?'],
+  light: ['가볍게 {m} 어때', '{m:이면} 안 졸겠다'],
+  rice: ['밥심이지, {m}'],
+  sweet: ['당 떨어졌어, {m}…'],
+};
+const CON = {
+  any: ['아니야, 어제 먹었어', '{m:은} 좀 애매한데', '{m} 줄 길겠지…', '팀장님이 {m} 좋아하던데…', '{m}… 지난주에 먹었나?'],
+  soup: ['국물 튀면 셔츠 망해', '흰 셔츠인데 {m}…'],
+  spicy: ['아니야, 너무 매워', '{m} 먹으면 땀나는데'],
+  noodle: ['면 불면 끝인데…', '{m:은} 금방 배고파'],
+  meat: ['고기 냄새 배겠다…', '오후 회의인데 {m}…'],
+  heavy: ['아니야, {m} 헤비해', '{m} 먹으면 오후에 잔다', '더 가벼운 거…'],
+  light: ['{m:은} 배 안 찰 듯', '이걸로 퇴근까지 버텨?'],
+  rice: ['탄수화물 너무 많은데…'],
+  sweet: ['밥 대신 디저트는 좀…'],
+};
+const FINAL = {
+  spicy: '스트레스엔 역시 {m}!', soup: '결국 국물이지, {m}!', noodle: '오늘은 면이다, {m}!',
+  meat: '고기는 진리, {m}!', heavy: '그래, 든든하게 {m}!', light: '가볍게 {m:로} 결정!',
+  rice: '밥심! {m} 간다', sweet: '오늘은 달달하게 {m}!', any: '그래, 오늘은 {m}!',
+};
+const FINAL_ORDER = ['spicy', 'soup', 'noodle', 'meat', 'heavy', 'light', 'rice', 'sweet'];
+function say(t, name) {
+  const s = name.length > 6 ? name.slice(0, 6) + '…' : name;
+  const j = jong(name);
+  return t
+    .replace(/\{m:은\}/g, s + (j ? '은' : '는'))
+    .replace(/\{m:이\}/g, s + (j ? '이' : '가'))
+    .replace(/\{m:이면\}/g, s + (j ? '이면' : '면'))
+    .replace(/\{m:로\}/g, s + (j && j !== 8 ? '으로' : '로'))
+    .replace(/\{m\}/g, s);
+}
+let lastLine = '';
+function thoughtAbout(name, pro) {
+  const bank = pro ? PRO : CON;
+  const opts = traitsOf(name).flatMap(t => bank[t] || []).concat(bank.any);
+  let line;
+  for (let tries = 0; tries < 6; tries++) { line = say(pick(opts), name); if (line !== lastLine) break; }
+  return line;
+}
+function finalLine(name) {
+  const tr = traitsOf(name);
+  const key = FINAL_ORDER.find(k => tr.includes(k)) || 'any';
+  return say(FINAL[key], name);
+}
+// 말풍선 크기를 문장 길이에 맞춘다 (글자는 눌리지 않게, 길면 글자 크기만 조금 줄임)
+function think(text) {
+  lastLine = text;
+  const el = $('ofThink'), rect = $('ofBubbleRect');
+  el.textContent = text;
+  let fs = 12.5;
+  el.style.fontSize = fs + 'px';
+  let w = el.getComputedTextLength ? el.getComputedTextLength() : 60;
+  while (w > 168 && fs > 10) { fs -= .5; el.style.fontSize = fs + 'px'; w = el.getComputedTextLength(); }
+  const bw = Math.max(64, Math.min(190, w + 26));
+  rect.setAttribute('width', bw.toFixed(1));
+  rect.setAttribute('x', (160 - bw / 2).toFixed(1));
+}
+
+function resetOfficePose() {
+  $('office').classList.remove('playing', 'done', 'walking', 'zoom', 'hide-bubble');
+  for (let i = 0; i < office.n; i++) { $('ofMon' + i).classList.remove('win'); $('ofMon' + i).style.transform = ''; }
+  $('ofMe').style.transform = '';
+  lookAt(null);
+  think(menus.length < 2 ? '메뉴 주세요' : '오늘 뭐 먹지…');
+}
+// 새 판을 준비할 때만 모니터에 띄울 메뉴를 정한다 (최대 3대). 고르는 동안에는 메뉴가 바뀌지 않는다.
+function resetOffice() {
+  const n = menus.length >= 3 ? 3 : 2;
+  if (office.n !== n || !$('ofHead')) renderOffice(n);
+  resetOfficePose();
+  const pick3 = menus.length >= 2 ? shuffle(menus.slice(0, 3)).slice(0, n) : [menus[0] || ''];
+  office.mons = [];
+  for (let i = 0; i < n; i++) setMon(i, pick3[i] || '');
+}
+async function officePlay() {
+  if (busy || menus.length < 2) return;
+  resetOfficePose();
+  setBusy(true);
+  setStatus('고민 중', 'spin');
+  const o = $('office'), n = office.n, L = OF_LAYOUT[n];
+  o.classList.add('playing');
+  // 화면에 떠 있는 메뉴 중에서만 고른다 (3연속 방지 메뉴는 피함)
+  const mons = office.mons.slice(), ban = bannedMenu();
+  const okIdx = mons.map((m, i) => i).filter(i => mons[i] && mons[i] !== ban);
+  const target = pick(okIdx.length ? okIdx : [0]);
+  const W = mons[target];
+  // 모니터 3대일 땐 왼쪽 ↔ 가운데 ↔ 오른쪽을 왔다 갔다 하며 전부 훑어본다
+  let cur = rand(n), dir = Math.random() < 0.5 ? 1 : -1;
+  const nextIdx = () => {
+    if (n === 2) return 1 - cur;
+    if (cur + dir < 0 || cur + dir >= n) dir = -dir;
+    return cur + dir;
+  };
+  // 전체 약 5초: 처음엔 빠르게 "이거? 저거?", 느려지면서 메뉴별 속마음 → 최종 멘트 → 줄 서기 → 모니터 확대
+  const TICKS = 9;
+  const swing = async (i, idx, line) => {
+    cur = idx;
+    lookAt(idx);
+    think(line || (i < 4 ? pick(QUICK) : thoughtAbout(mons[idx], i % 2 === 0)));
+    await sleep(100 + i * i * 5.5);
+  };
+  for (let i = 0; i < TICKS; i++) await swing(i, nextIdx());
+  if (cur === target) { const j = nextIdx(); await swing(TICKS, j, thoughtAbout(mons[j], false)); }
+  await swing(TICKS, target, thoughtAbout(W, true));
+  o.classList.add('done');
+  $('ofMon' + target).classList.add('win');
+  think(finalLine(W));
+  setStatus('결정!', 'win');
+  await sleep(650);
+
+  // 고른 모니터 줄 맨 뒤로 걸어가서 선다
+  const c = L.cs[target];
+  lookAt(null);
+  $('ofMon' + target).classList.add('win');
+  if (c === 160) o.classList.add('hide-bubble');   // 가운데 줄로 갈 땐 말풍선이 길을 막지 않게 숨긴다
+  else think(say('{m} 줄 서러 간다', W));
+  o.classList.add('walking');
+  $('ofMe').style.transform = `translate(${c - 160}px, -73px) scale(.36)`;
+  await sleep(880);
+  o.classList.remove('walking');
+
+  // 고른 모니터가 화면 가운데로 커지면서 결과 창으로 이어진다
+  o.classList.add('zoom');
+  $('ofMon' + target).style.transform = `translate(${160 - c}px, ${135 - (OF_TOP + L.h / 2)}px) scale(${L.zoom})`;
+  await sleep(520);
+  confetti();
+  setBusy(false);
+  addHistory(W);
+  openSheet(W, null, false, COPY.officeNote(L.pos[target]));
+}
+$('officeBtn').addEventListener('click', officePlay);
+
+/* ---------- title emoji reel: "랜덤 [🍜] 뽑기" ---------- */
+(function titleReel() {
+  const list = ['🍜', '🍕', '🍣', '🍔', '🍗', '🍲', '🌮', '🥟', '🍛', '🥗', '🍝', '🍙', '🥓', '🍤'];
+  const strip = $('titleStrip');
+  const n = list.length, reps = 40;
+  strip.innerHTML = Array.from({ length: n * reps }, (_, i) => `<span>${list[i % n]}</span>`).join('');
+  if (reduce) return;
+  let idx = 0;
+  const place = () => { strip.style.transform = `translateY(${-idx * 1.3}em)`; };
+  function step() {
+    if (document.body.classList.contains('sheet-open')) { setTimeout(step, 1700); return; }
+    idx += 4 + rand(5);
+    strip.classList.add('moving');
+    place();
+    setTimeout(() => {
+      strip.classList.remove('moving');
+      if (idx > n * (reps - 8)) {          // 끝에 가까워지면 같은 그림 위치로 몰래 되감기
+        strip.style.transition = 'none';
+        idx %= n; place();
+        void strip.offsetWidth;
+        strip.style.transition = '';
+      }
+    }, 720);
+    setTimeout(step, 1700);
+  }
+  setTimeout(step, 500);
+})();
+
+/* ---------- init ---------- */
+renderChips();
+resetReels();
+newLadder();
+resetOffice();
+hint(guideHint());
+</script>
+
+</body></html>
