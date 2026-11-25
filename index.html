@@ -1,5 +1,20 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>랜덤 음식 뽑기</title>
+<!-- 공유 미리보기(카카오톡·슬랙·페이스북·X 등) 썸네일 -->
+<meta name="description" content="오늘 뭐 먹지? 룰렛·사다리·김 대리로 메뉴를 골라 드려요.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="랜덤 음식 뽑기">
+<meta property="og:title" content="랜덤 음식 뽑기">
+<meta property="og:description" content="오늘 뭐 먹지? 룰렛·사다리·김 대리로 메뉴를 골라 드려요.">
+<meta property="og:url" content="https://hanjusung318-hub.github.io/RamdomfoodMachine.github.io/">
+<meta property="og:image" content="https://hanjusung318-hub.github.io/RamdomfoodMachine.github.io/og-image.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="랜덤 음식 뽑기 - 뽑기 캡슐 캐릭터 뽑이와 룰렛, 사다리, 김 대리">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="랜덤 음식 뽑기">
+<meta name="twitter:description" content="오늘 뭐 먹지? 룰렛·사다리·김 대리로 메뉴를 골라 드려요.">
+<meta name="twitter:image" content="https://hanjusung318-hub.github.io/RamdomfoodMachine.github.io/og-image.png">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -112,6 +127,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid color-mix(in srgb
 .chip .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .chip button { flex: none; width: 22px; height: 22px; border: 0; border-radius: 50%; background: color-mix(in srgb, var(--fg) 10%, transparent); cursor: pointer; display: grid; place-items: center; font-size: 13px; line-height: 1; color: var(--muted); }
 .chip button:hover { background: color-mix(in srgb, var(--red) 20%, transparent); color: var(--red); }
+.chip.over { opacity: .4; }
 .chip.vs-sep { background: none; padding: 6px 2px; color: var(--muted); font-weight: 800; font-size: 12px; letter-spacing: .08em; }
 .chips.locked { opacity: .5; pointer-events: none; }
 
@@ -819,6 +835,8 @@ const COPY = {
   ladderNote: k => `${k}번에서 출발했어요.`,
   ladderCover: '출발하면 사다리가 공개돼요',
   officeNote: pos => `김 대리가 ${pos} 모니터를 골랐어요.`,
+  officeFull: '김 대리는 메뉴 3개까지만 고민할 수 있어요.',
+  officeOver: '김 대리는 앞의 메뉴 3개만 고민해요. 흐린 메뉴는 이번엔 빠져요.',
 };
 
 /* ---------- character ---------- */
@@ -859,6 +877,8 @@ const save = () => { try { localStorage.setItem(STORE_KEY, JSON.stringify(menus)
 let busy = false;
 function hint(text, warn) { const h = $('hint'); h.textContent = text; h.classList.toggle('warn', !!warn); }
 
+// 김 대리는 메뉴 3개까지만 고민한다. 다른 방식은 12개까지.
+function maxMenus() { return activeMode === 'office' ? 3 : 12; }
 function renderChips() {
   const ul = $('chips');
   ul.innerHTML = '';
@@ -867,7 +887,7 @@ function renderChips() {
       const sep = document.createElement('li'); sep.className = 'chip vs-sep'; sep.textContent = 'VS'; ul.appendChild(sep);
     }
     const li = document.createElement('li');
-    li.className = 'chip';
+    li.className = 'chip' + (activeMode === 'office' && i >= 3 ? ' over' : '');
     li.innerHTML = `<span class="em">${emojiFor(m)}</span><span class="nm">${esc(m)}</span><button type="button" aria-label="${esc(m)} 삭제">✕</button>`;
     li.querySelector('button').addEventListener('click', () => { menus.splice(i, 1); changed(); });
     ul.appendChild(li);
@@ -879,7 +899,7 @@ function renderChips() {
   $('spinBtn').disabled = menus.length < 2 || busy;
   $('ladderBtn').disabled = menus.length < 2 || busy;
   $('officeBtn').disabled = menus.length < 2 || busy;
-  $('addBtn').disabled = menus.length >= 12 || busy;
+  $('addBtn').disabled = menus.length >= maxMenus() || busy;
 }
 function changed() {
   // 후보 메뉴가 바뀌면 화면에 안 보이는 방식까지 모두 다시 준비한다
@@ -896,7 +916,7 @@ $('addForm').addEventListener('submit', e => {
   const nope = msg => { hint(msg, true); form.classList.remove('shake'); void form.offsetWidth; form.classList.add('shake'); };
   if (!v) return nope(COPY.empty);
   if (menus.includes(v)) return nope(COPY.dup(v));
-  if (menus.length >= 12) return nope(COPY.full);
+  if (menus.length >= maxMenus()) return nope(activeMode === 'office' ? COPY.officeFull : COPY.full);
   menus.push(v); inp.value = ''; changed();
   hint(menus.length < 2 ? COPY.addedOneMore(v) : COPY.added(v));
 });
@@ -1168,6 +1188,8 @@ function setActive(idx) {
   MODE_TABS.forEach((t, i) => $(t).setAttribute('aria-selected', String(i === idx)));
   [0, 1, 2].forEach(i => $('dot' + i).classList.toggle('on', i === idx));
   if (!busy) setStatus(MODE_IDLE[idx], 'idle');
+  renderChips();
+  hint(menus.length < 2 ? COPY.needTwo : (activeMode === 'office' && menus.length > 3 ? COPY.officeOver : ''));
 }
 // 넘기는 도중에는 상태를 바꾸지 않고, 스크롤이 멈춘 뒤 한 번만 바꾼다 (중간에 왔다 갔다 하며 깜빡이던 문제)
 let scrollTarget = null, scrollTimer = 0;
@@ -1495,7 +1517,7 @@ function resetOffice() {
   const n = menus.length >= 3 ? 3 : 2;
   if (office.n !== n || !$('ofHead')) renderOffice(n);
   resetOfficePose();
-  const pick3 = menus.length >= 2 ? shuffle(menus).slice(0, n) : [menus[0] || ''];
+  const pick3 = menus.length >= 2 ? shuffle(menus.slice(0, 3)).slice(0, n) : [menus[0] || ''];
   office.mons = [];
   for (let i = 0; i < n; i++) setMon(i, pick3[i] || '');
 }
@@ -1592,5 +1614,3 @@ newLadder();
 resetOffice();
 if (menus.length < 2) hint(COPY.needTwo);
 </script>
-
-</body></html>
