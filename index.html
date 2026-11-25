@@ -1,3 +1,4 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>랜덤 음식 뽑기</title>
 <!-- 공유 미리보기(카카오톡·슬랙·페이스북·X 등) 썸네일 -->
 <meta name="description" content="오늘 뭐 먹지? 룰렛·사다리·김 대리로 메뉴를 골라 드려요.">
@@ -128,6 +129,9 @@ button:focus-visible, input:focus-visible { outline: 3px solid color-mix(in srgb
 .chip button { flex: none; width: 22px; height: 22px; border: 0; border-radius: 50%; background: color-mix(in srgb, var(--fg) 10%, transparent); cursor: pointer; display: grid; place-items: center; font-size: 13px; line-height: 1; color: var(--muted); }
 .chip button:hover { background: color-mix(in srgb, var(--red) 20%, transparent); color: var(--red); }
 .chip.over { opacity: .4; }
+.reset-link { align-self: flex-end; margin-top: -6px; border: 0; background: none; padding: 2px 0; font-size: 13px; color: var(--muted); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.reset-link:hover { color: var(--accent); }
+.reset-link:disabled { opacity: .4; cursor: default; }
 .chip.vs-sep { background: none; padding: 6px 2px; color: var(--muted); font-weight: 800; font-size: 12px; letter-spacing: .08em; }
 .chips.locked { opacity: .5; pointer-events: none; }
 
@@ -480,6 +484,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid color-mix(in srgb
     </form>
     <p class="hint" id="hint" aria-live="polite"></p>
     <ul class="chips" id="chips"></ul>
+    <button class="reset-link" id="resetMenus" type="button">기본 메뉴로 되돌리기</button>
   </section>
 
   <section class="card machine" id="machine" data-mode="idle" aria-label="뽑기">
@@ -516,7 +521,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid color-mix(in srgb
     <div class="pane" id="paneOffice" role="tabpanel" aria-labelledby="tabOffice">
       <div class="office" id="office"></div>
       <button class="btn-spin" id="officeBtn" type="button">김 대리에게 맡기기</button>
-      <p class="foot-hint">김 대리가 양쪽 모니터를 번갈아 보며 고민하다가 하나를 골라 줘요.</p>
+      <p class="foot-hint">김 대리가 모니터를 번갈아 보며 고민하다가 하나를 골라 줘요.</p>
     </div>
     </div>
     <div class="dots" aria-hidden="true"><span class="on" id="dot0"></span><span id="dot1"></span><span id="dot2"></span></div>
@@ -835,8 +840,9 @@ const COPY = {
   ladderNote: k => `${k}번에서 출발했어요.`,
   ladderCover: '출발하면 사다리가 공개돼요',
   officeNote: pos => `김 대리가 ${pos} 모니터를 골랐어요.`,
-  officeFull: '김 대리는 메뉴 3개까지만 고민할 수 있어요.',
-  officeOver: '김 대리는 앞의 메뉴 3개만 고민해요. 흐린 메뉴는 이번엔 빠져요.',
+  officeNeed: '메뉴를 2~3개 넣어 주세요. 김 대리는 4개 이상 고민을 어려워해요.',
+  officeFull: '김 대리는 4개 이상 고민을 어려워해요.',
+  officeOver: '김 대리는 4개 이상 고민을 어려워해요. 앞의 3개만 고민할게요.',
 };
 
 /* ---------- character ---------- */
@@ -869,8 +875,10 @@ $('charBig').innerHTML = charSVG();
 });
 
 /* ---------- menus ---------- */
-const STORE_KEY = 'random-food-list';
-let menus = [];
+// 처음 열면 직장인 점심 단골 메뉴로 시작한다 (앞의 3개는 김 대리 모니터에도 그대로 쓰인다)
+const DEFAULT_MENUS = ['김치찌개', '돈까스', '쌀국수', '제육볶음', '초밥', '마라탕'];
+const STORE_KEY = 'random-food-list-v2';
+let menus = DEFAULT_MENUS.slice();
 try { const s = JSON.parse(localStorage.getItem(STORE_KEY)); if (Array.isArray(s)) menus = s.slice(0, 12); } catch (e) {}
 const save = () => { try { localStorage.setItem(STORE_KEY, JSON.stringify(menus)); } catch (e) {} };
 
@@ -879,6 +887,12 @@ function hint(text, warn) { const h = $('hint'); h.textContent = text; h.classLi
 
 // 김 대리는 메뉴 3개까지만 고민한다. 다른 방식은 12개까지.
 function maxMenus() { return activeMode === 'office' ? 3 : 12; }
+// 지금 방식에 맞는 안내 문구 (김 대리 화면에서는 김 대리 전용 문구)
+function guideHint() {
+  const n = menus.length;
+  if (activeMode === 'office') return n < 2 ? COPY.officeNeed : n > 3 ? COPY.officeOver : '';
+  return n < 2 ? COPY.needTwo : '';
+}
 function renderChips() {
   const ul = $('chips');
   ul.innerHTML = '';
@@ -900,13 +914,19 @@ function renderChips() {
   $('ladderBtn').disabled = menus.length < 2 || busy;
   $('officeBtn').disabled = menus.length < 2 || busy;
   $('addBtn').disabled = menus.length >= maxMenus() || busy;
+  $('resetMenus').disabled = busy;
 }
 function changed() {
   // 후보 메뉴가 바뀌면 화면에 안 보이는 방식까지 모두 다시 준비한다
   save(); renderChips(); resetReels(); resetVS(); newLadder(); resetOffice();
-  hint(menus.length < 2 ? COPY.needTwo : '');
+  hint(guideHint());
 }
 
+$('resetMenus').addEventListener('click', () => {
+  if (busy) return;
+  menus = DEFAULT_MENUS.slice(); changed();
+  hint('기본 메뉴로 되돌렸어요.');
+});
 $('addForm').addEventListener('submit', e => {
   e.preventDefault();
   if (busy) return;
@@ -1189,7 +1209,7 @@ function setActive(idx) {
   [0, 1, 2].forEach(i => $('dot' + i).classList.toggle('on', i === idx));
   if (!busy) setStatus(MODE_IDLE[idx], 'idle');
   renderChips();
-  hint(menus.length < 2 ? COPY.needTwo : (activeMode === 'office' && menus.length > 3 ? COPY.officeOver : ''));
+  hint(guideHint());
 }
 // 넘기는 도중에는 상태를 바꾸지 않고, 스크롤이 멈춘 뒤 한 번만 바꾼다 (중간에 왔다 갔다 하며 깜빡이던 문제)
 let scrollTarget = null, scrollTimer = 0;
@@ -1612,5 +1632,7 @@ renderChips();
 resetReels();
 newLadder();
 resetOffice();
-if (menus.length < 2) hint(COPY.needTwo);
+hint(guideHint());
 </script>
+
+</body></html>
